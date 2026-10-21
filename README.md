@@ -170,6 +170,26 @@ Run `board`, open the printed URL in a browser, and turn it on in a project with
 
 "Allow once" returns a real `allow` to Claude Code. That skips Claude's own prompt, but your deny rules still win (checked by a test). Auto and bypass permission modes and `ask` rules were not tested.
 
+## How it compares
+
+Several good open-source tools guard coding agents. They solve overlapping problems with different trade-offs. This table is drawn from each project's own README (October 2026), so check the projects for current details.
+
+| | **Sure?** | [AgentTrail Guard](https://github.com/agenttrailhq/guard) | [cc-safety-net](https://github.com/kenryu42/cc-safety-net) | [Cupcake](https://github.com/eqtylab/cupcake) |
+|---|---|---|---|---|
+| **Approach** | Pattern rules kept as plain data | Pattern rules in 11 packs (74 rules) | Parses what a command does, plus rulebooks | Policy as code (OPA/Rego compiled to Wasm) |
+| **Agents** | Claude Code | Claude Code, Cursor, Codex CLI | 17 coding CLIs | Claude Code, Cursor, Factory AI, OpenCode |
+| **What you see** | Four plain-English lines (what, why it matters, cost, undo) and a tier | Rule id, title and reason | A block message that explains why | A policy feedback message |
+| **Deciding** | Local board: drag a card to Allow once, Block, Ask Claude or Always allow; flow map and replay | The agent's own prompt; rules block, ask or warn | The agent's own prompt; a GUI to pick presets and toggle rules | Allow, modify, block, warn or require review |
+| **Tuning** | `sure.json` options per project | Allow one command shape, change a rule's action, disable a pack, add rules with test fixtures | Standard, Strict and Paranoid presets; custom rulebooks | Write your own policies |
+| **Looking back** | Replay tab and a ledger per project | `scan` replays past transcripts into an HTML report | Audit log, `doctor` and `explain` | Structured logs and traces |
+| **Needs** | Python 3.9+, no packages | Node.js 20+ | Node.js 18+ | A Rust CLI |
+
+**Choose Sure? when** you want every risky action explained in plain words with an undo answer, a local board to decide on, a tool built and tested on Windows, and nothing to install beyond Python.
+
+**Choose another when** you need more rules today (Guard), real shell parsing or many different agents (cc-safety-net), or policy as code and enterprise controls (Cupcake).
+
+**Where Sure? is behind:** the public repo supports Claude Code only, detection is pattern matching and not a shell parser, and it does not yet have custom rules with a test runner, a transcript scan report, or a status/doctor command. Those are on the list, and the gaps above are listed on purpose so you can judge it for what it is.
+
 ## Commands
 
 ```bash
