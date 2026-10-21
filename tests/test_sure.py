@@ -15,7 +15,7 @@ def test_safe_command_returns_none():
 
 
 def test_unknown_tool_returns_none():
-    assert sure.classify("mcp__x__y", {}) is None
+    assert sure.classify("Frobnicate", {}) is None
 
 
 def test_rm_is_delete():
@@ -70,9 +70,10 @@ def test_tiers():
 
 
 def test_config_file_edit():
-    for path in ["app/auth/middleware.py", "package.json", ".env", "requirements.txt"]:
+    for path, want in [("app/auth/middleware.py", "secrets_and_auth"), ("package.json", "config"), (".env", "secrets_and_auth"),
+                       ("requirements.txt", "config")]:  # B5: secrets/auth/migration files split out of config
         r = sure.classify("Write", {"file_path": path})
-        assert r and r["kind"] == "config", path
+        assert r and r["kind"] == want, path
     assert sure.classify("Edit", {"file_path": "src/button.css"}) is None
 
 
@@ -221,7 +222,7 @@ def test_stats_empty(tmp_path):
 
 def test_multiedit_and_notebook_config():
     assert sure.classify("MultiEdit", {"file_path": "app/package.json"})["kind"] == "config"
-    assert sure.classify("NotebookEdit", {"notebook_path": "x/.env"})["kind"] == "config"
+    assert sure.classify("NotebookEdit", {"notebook_path": "x/.env"})["kind"] == "secrets_and_auth"  # B5
     assert sure.classify("NotebookEdit", {}) is None
     assert sure.classify("MultiEdit", {"file_path": "app/main.py"}) is None
 

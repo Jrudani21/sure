@@ -4,7 +4,11 @@
 ```bash
 python -m pytest -q
 ```
-72 tests at time of writing, in `tests/test_sure.py` (features) and `tests/test_review.py` (regressions from the final review: UTF-8 input, save-point numbering, false positives and negatives, stats). All must pass before a commit.
+About 1,070 tests at time of writing, under `tests/`: the classifier and cards, the hook, the permission directory, events, trusted kinds, the board server and its security checks, the hook-to-board client (including hostile servers and timing bounds), the page's static guards, and a 120-command labelled corpus (`tests/data/classifier_corpus.json`). All must pass before a commit. Lint with `ruff check sure tests scripts` (config in `ruff.toml`).
+
+The suite starts local boards on port 0 and a few tests use wall-clock bounds; they were run under CPU load to check they are stable.
+
+For the real end-to-end check run `SURE_SMOKE_ROOT=<folder> python scripts/live_board_smoke.py`. It starts a board, runs two real `claude -p` sessions that try `rm -rf` on a throwaway file, answers "Allow once" for one and "Block" for the other, and checks the file is gone or still there.
 
 ## Method
 Test first: write the test, watch it fail for the right reason, write the minimum code, watch it pass, then run the whole suite.

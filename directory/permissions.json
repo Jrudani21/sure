@@ -1,0 +1,419 @@
+[
+  {
+    "id": "download_and_run",
+    "name": "Download then run",
+    "touches": "run_commands",
+    "what": "Downloads a file and then runs it in the same command: {target}",
+    "why": "You never get to read what was downloaded before it runs.",
+    "cost": "Anything on this computer, including files and passwords, could be read or changed.",
+    "undo": "there is no way to un-run it; you would have to check the damage by hand.",
+    "tier": "impossible",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": []
+  },
+  {
+    "id": "unreadable_command",
+    "name": "Command too long to read",
+    "touches": "run_commands",
+    "what": "This command is too long for Sure? to read: {target}",
+    "why": "Sure? reads only the first 4000 characters, so it cannot tell you what the rest does.",
+    "cost": "Anything the unread part does, including deleting files or sending data away.",
+    "undo": "depends on what the command does; read it in full before you allow it.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": []
+  },
+  {
+    "id": "pipe_to_shell",
+    "name": "Pipe download into a shell",
+    "touches": "run_commands",
+    "what": "Downloads code from the internet and runs it immediately: {target}",
+    "why": "You never see what the downloaded code does before it runs.",
+    "cost": "Anything on this computer, including files and passwords, could be read or changed.",
+    "undo": "there is no way to un-run it; you would have to check the damage by hand.",
+    "tier": "impossible",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "whole",
+        "pattern": "\\b(curl|wget|irm|iwr|Invoke-WebRequest|Invoke-RestMethod|DownloadString|base64\\s+(-d|-D|--decode))\\b.{0,500}?\\|\\s*((sudo|env)(\\s+-\\S+)*\\s+)?(sh|bash|zsh|iex|Invoke-Expression|python3?)(\\s|[\\\"')]|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "whole",
+        "pattern": "(\\b(sh|bash|zsh|source)\\b|(^|[\\s;&|(])\\.(?=\\s))[^\\n]{0,20}[<$]\\(\\s*(curl|wget)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "whole",
+        "pattern": "\\b(iex|Invoke-Expression)\\b\\s*\\(?\\s*(iwr|irm|Invoke-WebRequest|Invoke-RestMethod|New-Object\\s+(System\\.)?Net\\.WebClient\\b)"
+      }
+    ]
+  },
+  {
+    "id": "database",
+    "name": "Change database data",
+    "touches": "run_commands",
+    "what": "Changes or erases database data or its structure: {target}",
+    "why": "Databases hold the real information your app depends on.",
+    "cost": "Data can be lost for good, or the app can stop working with the old data.",
+    "undo": "only if you have a backup of the database from before.",
+    "tier": "impossible",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "whole",
+        "pattern": "\\bDROP\\s+(TABLE|DATABASE|SCHEMA)\\b|\\bTRUNCATE\\s+TABLE\\b|\\bDELETE\\s+FROM\\b|\\bdb\\.[\\w.]+\\.drop\\(\\s*\\)|\\.dropDatabase\\("
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(npx\\s+)?prisma\\s+(migrate|db\\s+push)|^alembic(?=\\s|$)|manage\\.py\\s+migrate|db:(migrate|drop|reset)|^flyway(\\s+-\\S+)*\\s+clean(?=\\s|$)"
+      }
+    ]
+  },
+  {
+    "id": "system_damage",
+    "name": "Damage the whole system",
+    "touches": "run_commands",
+    "what": "Runs a command that can break this computer or lock you out: {target}",
+    "why": "These commands act on the whole system, not just your project.",
+    "cost": "The computer could stop starting, lose every file on a disk, or become open to anyone.",
+    "undo": "usually not; you would need a full backup or a reinstall.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^chmod\\b(?=.*\\s-\\w*R)(?=.*\\s0?777(?=\\s|$))"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^dd\\b.*\\bof=/dev/(?!null\\b)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^mkfs(\\.\\w+)?(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "whole",
+        "pattern": ":\\(\\)\\s*\\{\\s*:\\s*\\|\\s*:\\s*&\\s*\\}\\s*;\\s*:"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^kill\\s+-(9|KILL|SIGKILL)\\s+-1(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "whole",
+        "pattern": "(>>?|\\btee\\b(\\s+-\\w+)*)\\s*/etc/(sudoers|passwd|shadow)\\b"
+      }
+    ]
+  },
+  {
+    "id": "delete",
+    "name": "Delete files",
+    "touches": "write_files",
+    "what": "Permanently deletes files or discards your changes: {target}",
+    "why": "Deleted files skip the recycle bin, and discarded changes are not saved anywhere.",
+    "cost": "Your work or project files could disappear.",
+    "undo": "only if the files were saved in git or a backup beforehand.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(rm|del|erase|rd|rmdir|ri|unlink|shred|Remove-Item)(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^find\\b.*\\s-delete(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^git(\\s+(-[Cc]\\s*(\"[^\"]*\"|'[^']*'|\\S+)|--[\\w-]+(=\\S+)?|-[pP])){0,6}\\s+(clean|reset\\s+--hard|restore|stash\\s+drop|checkout\\s+--|branch\\s+(?-i:-D))(?=\\s|$)"
+      }
+    ]
+  },
+  {
+    "id": "push",
+    "name": "Push code online",
+    "touches": "network",
+    "what": "Sends your code to a shared online copy: {target}",
+    "why": "Other people or services may see or build on it straight away.",
+    "cost": "A mistake becomes public, and a forced push can overwrite other people's work.",
+    "undo": "possible, but it needs a second correcting push and others may already have your version.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^git(\\s+(-[Cc]\\s*(\"[^\"]*\"|'[^']*'|\\S+)|--[\\w-]+(=\\S+)?|-[pP])){0,6}\\s+push(?=\\s|$)"
+      }
+    ]
+  },
+  {
+    "id": "install",
+    "name": "Install a package",
+    "touches": "run_commands",
+    "what": "Adds someone else's code to your project: {target}",
+    "why": "That code runs with the same access your project has, and is only as trustworthy as its author.",
+    "cost": "Your project grows, and a bad or abandoned package can bring bugs or security holes.",
+    "undo": "uninstall the package; this usually restores things.",
+    "tier": "easy",
+    "decided_by": [
+      "you",
+      "saved rule"
+    ],
+    "lasts": "session",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(npm|pnpm|yarn|pip3?|cargo|winget|choco|gem|brew|apt|apt-get|go|uv)\\s+(pip\\s+)?(install|add|i|ci)(?=\\s|$)|^go\\s+get(?=\\s|$)"
+      }
+    ]
+  },
+  {
+    "id": "script_launcher",
+    "name": "Run a hidden script",
+    "touches": "run_commands",
+    "what": "Runs a script whose real actions are hidden inside it: {target}",
+    "why": "The command name looks harmless but the script can do anything, including delete or send files.",
+    "cost": "You are trusting the script's contents without seeing them.",
+    "undo": "depends on what the script does; open the script first to find out.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(npm|pnpm|yarn)\\s+run(?=\\s|$)|^(?:\\S*[\\\\/])?make(?=\\s|$)|^python3?\\s+setup\\.py|^\\./\\S+\\.sh|^bash\\s+\\S+\\.sh|^(cargo|go|dotnet)\\s+run(?=\\s|$)"
+      }
+    ]
+  },
+  {
+    "id": "settings_or_mode",
+    "name": "Change Claude's own settings",
+    "touches": "settings_or_mode",
+    "what": "Edits the settings that control what Claude may do without asking: {target}",
+    "why": "A change here can switch off these safety prompts or widen what Claude is allowed to do.",
+    "cost": "Claude could gain more freedom than you intended, without any further warning.",
+    "undo": "put the old version of the file back from git or an editor's history.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(^|/)\\.claude/settings(\\.local)?\\.json$"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(^|/)\\.sure/|(^|/)sure\\.json$"
+      }
+    ]
+  },
+  {
+    "id": "protected_path_write",
+    "name": "Write inside .git or .claude",
+    "touches": "protected_paths",
+    "what": "Writes inside a folder that holds git's records or Claude's own setup: {target}",
+    "why": "These folders control how your project history and Claude itself behave; they are not normal project files.",
+    "cost": "Git history, hooks or Claude's agents and commands could be damaged or tampered with.",
+    "undo": "possible only if you have a copy of the folder from before.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(^|/)\\.(git|claude)/"
+      }
+    ]
+  },
+  {
+    "id": "secrets_and_auth",
+    "name": "Edit a secrets, login or database-change file",
+    "touches": "write_files",
+    "what": "Edits a file that holds secrets, controls logins or changes the database: {target}",
+    "why": "These files hold passwords and keys, decide who can sign in, or change how your data is stored.",
+    "cost": "A leaked key, a lock-out, an open door for strangers, or a database change that is hard to reverse.",
+    "undo": "put the old file back from git, but a leaked key must be replaced and a database change that already ran needs its own undo.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)(?!.*/)(?:\\.env(?:\\.(?!(?:example|sample|template)$).+)?|.*(?:(?<![a-z])(?:auth(?:entication|orization|orize)?|oauth2?|secrets?|credentials?|schemas?|middleware|migrat(?:e|ion)s?)(?![a-z])|(?-i:(?<=[a-z])(?:Auth|OAuth|Secret|Credential|Schema|Middleware|Migration)(?:s|ion)?|(?<![a-z])(?:auth|Auth)(?=[A-Z])|(?<![a-z])(?:secret|credential)s?(?=[A-Z]))).*|.*id_rsa.*|.*\\.npmrc.*|.*\\.pypirc.*)$"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(^|/)migrat(?:e|ion)s?/"
+      }
+    ]
+  },
+  {
+    "id": "config",
+    "name": "Edit a dependency or build file",
+    "touches": "write_files",
+    "what": "Edits a file that lists the app's dependencies or how it is built: {target}",
+    "why": "A small mistake here can pull in an unexpected package or stop the app from building or starting.",
+    "cost": "The app may stop installing, building or starting until the change is fixed.",
+    "undo": "put the old version of the file back from git or an editor's history.",
+    "tier": "easy",
+    "decided_by": [
+      "you",
+      "saved rule"
+    ],
+    "lasts": "session",
+    "matchers": [
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)(?!.*/)(?:package\\.json|package-lock\\.json|requirements\\.txt|pyproject\\.toml|pipfile|cargo\\.toml|go\\.mod|dockerfile(?:\\..+)?|docker-compose.*|\\.env\\.(?:sample|template))$"
+      }
+    ]
+  },
+  {
+    "id": "network_fetch",
+    "name": "Fetch a web page",
+    "touches": "network",
+    "what": "Reads a web page from the internet: {target}",
+    "why": "The page's content comes from outside and can contain instructions meant to mislead Claude.",
+    "cost": "Little by itself, but the address you send reaches that site.",
+    "undo": "nothing was changed on your computer, so there is nothing to undo.",
+    "tier": "easy",
+    "decided_by": [
+      "you",
+      "saved rule"
+    ],
+    "lasts": "session",
+    "matchers": [
+      {
+        "tool": "WebFetch",
+        "scope": "tool",
+        "pattern": "WebFetch"
+      }
+    ],
+    "default": "quiet"
+  },
+  {
+    "id": "web_search",
+    "name": "Search the web",
+    "touches": "network",
+    "what": "Searches the internet for: {target}",
+    "why": "Your search words leave this computer and the results come from outside.",
+    "cost": "Little by itself; the search terms reach a search service.",
+    "undo": "nothing was changed on your computer, so there is nothing to undo.",
+    "tier": "easy",
+    "decided_by": [
+      "you",
+      "saved rule"
+    ],
+    "lasts": "session",
+    "matchers": [
+      {
+        "tool": "WebSearch",
+        "scope": "tool",
+        "pattern": "WebSearch"
+      }
+    ],
+    "default": "quiet"
+  },
+  {
+    "id": "external_tool",
+    "name": "Use an outside connected tool",
+    "touches": "external_tools",
+    "what": "Calls a connected outside tool: {target}",
+    "why": "Connected tools can send messages, change accounts or act in other services on your behalf.",
+    "cost": "Something outside this computer may be changed or sent, such as a message or a record.",
+    "undo": "often not; a sent message or changed account may need fixing by hand.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "mcp__.*",
+        "scope": "tool",
+        "pattern": "^mcp__"
+      }
+    ],
+    "default": "quiet",
+    "ask_tokens": ["delete", "remove", "send", "post", "write", "drop", "exec", "execute", "run", "create", "update", "set", "push", "publish", "deploy", "kill", "upload", "move", "rename", "install", "apply", "commit", "merge", "close", "reset", "revoke", "grant", "truncate", "destroy", "purge", "wipe", "shutdown", "restart", "disable", "enable", "transfer", "pay", "approve", "reject", "insert", "add", "trash", "edit", "save", "submit", "terminate", "stop", "cancel", "refund", "charge", "erase", "clear", "replace", "patch", "archive", "evaluate", "invite", "ban", "import", "fork", "label", "fill", "reboot", "unset", "rm", "reply", "forward", "share", "connect", "javascript"],
+    "app_prefix": "mcp__ccd_",
+    "app_ask_tokens": ["delete", "archive", "stop", "merge", "kill", "discard", "remove"]
+  },
+  {
+    "id": "subagent",
+    "name": "Start a helper agent",
+    "touches": "delegate",
+    "what": "Starts a separate helper agent to do a job: {target}",
+    "why": "The helper works on its own and uses the same permissions without you watching each step.",
+    "cost": "It uses extra time and usage, and may change files while it runs.",
+    "undo": "stop the helper and undo its changes using git or a saved copy.",
+    "tier": "easy",
+    "decided_by": [
+      "you",
+      "saved rule"
+    ],
+    "lasts": "session",
+    "matchers": [
+      {
+        "tool": "Task|Agent",
+        "scope": "tool",
+        "pattern": "."
+      }
+    ],
+    "default": "quiet"
+  }
+]

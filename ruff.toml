@@ -1,0 +1,10 @@
+line-length = 140
+target-version = "py39"
+
+[lint]
+select = ["E", "F", "W", "I", "UP"]
+
+[lint.per-file-ignores]
+"tests/*" = ["I001", "E501", "UP031", "F401"]
+"scripts/*" = ["I001", "E501", "UP031"]
+"sure/board.py" = ["I001", "E501"]

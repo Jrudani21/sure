@@ -94,15 +94,15 @@ def test_harmless_mentions_stay_silent(cmd):  # finding 4
 
 @pytest.mark.parametrize(
     "path",
-    [r"E:\Local\auth-demo\src\app.py", r"C:\x\schema-docs\README.md", "/home/u/.envrc", "C:/a/.environment", "notes/author.md"],
+    [r"C:\work\auth-demo\src\app.py", r"C:\x\schema-docs\README.md", "/home/u/.envrc", "C:/a/.environment", "notes/author.md"],
 )
 def test_config_matches_file_not_folder(path):  # finding 5
     assert sure.classify("Write", {"file_path": path}) is None
 
 
 @pytest.mark.parametrize("path", ["Dockerfile.dev", "src/migrations/0001_init.py", "/p/.env", "/p/.env.local", "/p/auth_utils.py"])
-def test_config_still_caught(path):
-    assert sure.classify("Edit", {"file_path": path})["kind"] == "config"
+def test_config_still_caught(path):  # B5: only the dependency manifest stays config
+    assert sure.classify("Edit", {"file_path": path})["kind"] == ("config" if path == "Dockerfile.dev" else "secrets_and_auth")
 
 
 def test_stats_ignores_embedded_text(tmp_path):  # finding 6
