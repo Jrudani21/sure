@@ -30,9 +30,17 @@ Commands are split on `&&`, `||`, `;`, `|`, `&` and newlines, but not inside quo
 | Kind | Examples | Tier | Card |
 |---|---|---|---|
 | download_and_run, pipe_to_shell, database | `curl ... \| bash`, `DROP TABLE`, `alembic`, `flyway clean` | impossible | yes |
+| reverse_shell | `bash -i >& /dev/tcp/...`, `nc -e`, `socat EXEC:`, Python/Perl/PHP/Ruby socket shells | impossible | yes |
+| infra_change | `terraform apply/destroy`, `kubectl delete/drain`, `helm uninstall/rollback`, `aws ... delete/terminate`, `gcloud/az ... delete`, `docker system prune`, `docker volume rm`, `docker compose down -v` | impossible | yes |
+| secret_read | `cat .env`, `cat ~/.ssh/id_rsa`, `printenv`, `echo $API_TOKEN`, `gh auth token`, `aws secretsmanager get-secret-value`, `kubectl get secret -o yaml`, `scp .env host:` | impossible | yes |
+| data_exposure | `ngrok http`, `ssh -R`, reverse shells, uploads to `transfer.sh`/`0x0.st`/`gh gist create`, `aws s3 ... --acl public-read`, `gsutil iam ch allUsers:...` | hard | yes |
+| safeguard_bypass | `git commit --no-verify`, `core.hooksPath /dev/null`, `gh pr merge --admin`, `history -c`, `Set-ExecutionPolicy Bypass`, `ssh -o StrictHostKeyChecking=no` | hard | yes |
+| agent_autonomy | `claude -p`, `codex exec`, `--dangerously-skip-permissions`, `--yolo`, `claude mcp add`, `AIDER_YES_ALWAYS=true` | hard | yes |
+| agent_config_edit | `CLAUDE.md`, `AGENTS.md`, `.cursorrules`, `.mcp.json`, skills, commands and agent memory folders | hard | yes |
 | system_damage | `chmod -R 777`, `mkfs`, `dd of=/dev/...` | hard | yes |
 | delete, push, script_launcher | `rm -rf`, `Remove-Item`, `git push --force`, `npm run`, `make` | hard | yes |
 | unreadable_command | a command over 4000 characters with nothing else matched | hard | yes |
+| test_tampering | `jest -u`, `pytest --snapshot-update`, `--cov-fail-under=0`, `[skip ci]`, `sed -i` adding `.skip(`, `git rm tests/...` | hard | yes |
 | install | `npm install`, `pip install`, `cargo add` | easy | yes |
 | config | `package.json`, `requirements.txt`, `Dockerfile` | easy | yes |
 | secrets_and_auth | `.env`, auth, middleware, secret, credential, migration and schema files | hard | yes |
@@ -40,7 +48,34 @@ Commands are split on `&&`, `||`, `;`, `|`, `&` and newlines, but not inside quo
 | WebFetch, WebSearch, Task, Agent | | easy | logged only |
 | MCP tools (`mcp__*`) | | hard when the name has a mutating word (delete, send, reply, forward, share, connect, update, javascript, ...) | otherwise logged only |
 
-"Logged only" means Sure? adds no card, so Claude Code's own permission flow decides. The desktop app's own `mcp__ccd_*` tools are logged only except delete, archive, stop and merge style names. Read-only tools (Read, Grep, Glob) are not hooked.
+"Logged only" means Sure? adds no card, so Claude Code's own permission flow decides. The desktop app's own `mcp__ccd_*` tools are logged only except delete, archive, stop and merge style names. Read-only tools (Read, Grep, Glob) are not hooked, so Sure? cannot see Claude opening `.env` or a key file with the Read tool; it only sees shell commands such as `cat .env`. To block those reads too, add `permissions.deny` rules in Claude Code's own settings (see [Block file reads too](#block-file-reads-too)).
+
+### Block file reads too
+
+Sure? covers shell commands that read secrets; Claude Code's own `permissions.deny` rules cover its Read tool. Neither covers the other, so use both. Put this in `~/.claude/settings.json` to apply it in every project:
+
+```json
+{
+  "permissions": {
+    "deny": [
+      "Read(.env)",
+      "Read(.env.local)",
+      "Read(.env.production)",
+      "Read(~/.ssh/**)",
+      "Read(~/.aws/**)",
+      "Read(~/.kube/config)"
+    ]
+  }
+}
+```
+
+Notes, from [Claude Code's permissions docs](https://code.claude.com/docs/en/permissions):
+
+- A bare filename such as `Read(.env)` matches at any depth. `~/` is your home folder. A single leading `/` is **not** the filesystem root; it anchors at the settings file, so use `//` for an absolute path.
+- On Windows, write forward slashes. Paths are normalized before matching, so `C:\Users\you` is `/c/Users/you`, and `//c/**/.env` matches `.env` anywhere on the C: drive.
+- Deny always wins over allow. `Read(.env.*)` would also block `.env.example`, so the list above names the real files instead.
+- The docs say Read rules are applied on a best-effort basis to Grep, Glob and similar built-in tools, and to recognized shell file commands such as `cat`. They do not cover a script that opens files itself. Do not treat either layer as a guarantee.
+- Check what is active with `/permissions` inside Claude Code.
 
 ## Commands
 
@@ -94,7 +129,7 @@ The hook makes a short HTTP call to 127.0.0.1 only when a project has the board 
 
 ## Known limits
 
-- Detection is pattern matching, not a shell parser. Unusual quoting, wrapper forms, `$(...)` inside `echo`, some PowerShell constructs (`Start-Process -Verb RunAs`, `Set-ExecutionPolicy Bypass`, `Format-Volume`, ...), and tools such as `docker`, `kubectl`, `terraform destroy`, `rsync --delete` and `truncate` can get past it.
+- Detection is pattern matching, not a shell parser. Unusual quoting, wrapper forms, `$(...)` inside `echo`, some PowerShell constructs (`Start-Process -Verb RunAs`, `Set-ExecutionPolicy Bypass`, `Format-Volume`, ...), and tools such as `rsync --delete`, `truncate`, other forms of docker, kubectl and cloud commands (for example `docker rm -f` or `kubectl scale --replicas=0`), and commands split across lines with `\` can get past it.
 - It cannot see what a script does once launched, and it does not inspect MCP tool input.
 - Anything running as you, including the agent, can tamper with Sure? (see SECURITY.md).
 - A visible but unattended board tab makes the hook wait up to 120 seconds.
@@ -107,4 +142,4 @@ ruff check sure tests scripts
 python scripts/live_board_smoke.py    # needs SURE_SMOKE_ROOT=<a folder>, runs two real `claude -p` sessions
 ```
 
-MIT licensed.
+MIT licensed. Please read [RESPONSIBLE_USE.md](RESPONSIBLE_USE.md) before redistributing or building on it.

@@ -415,5 +415,638 @@
       }
     ],
     "default": "quiet"
+  },
+  {
+    "id": "infra_change",
+    "name": "Change live infrastructure",
+    "touches": "run_commands",
+    "what": "Changes or removes servers, cloud resources or containers: {target}",
+    "why": "These commands act on live systems, often with no confirmation and no recycle bin.",
+    "cost": "A website, database or cloud account could go down, lose data, or start costing money.",
+    "undo": "only if you have a backup or can rebuild it from your configuration; a few actions, such as a rollback or a drain, can be reversed by hand.",
+    "tier": "impossible",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:terraform|tofu|terragrunt)(?:\\.exe|\\.cmd)?\\b.*?\\s(?:apply|destroy|workspace\\s+delete|state\\s+(?:rm|mv|push))(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?pulumi(?:\\.exe|\\.cmd)?\\b.*?\\sdestroy(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:kubectl|oc)(?:\\.exe|\\.cmd)?\\b.*?\\s(?:delete|drain|replace\\s+--force)(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?helm(?:\\.exe|\\.cmd)?\\b.*?\\s(?:uninstall|delete|rollback)(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?eksctl(?:\\.exe|\\.cmd)?\\b.*?\\sdelete(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?aws(?:\\.exe|\\.cmd)?\\b.*?\\s(?:s3\\s+(?:rb|rm)|s3api\\s+delete-\\S+|[\\w-]+\\s+(?:delete|terminate|remove|deregister)-\\S+)(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:gcloud|az)(?:\\.exe|\\.cmd)?\\b.*?\\sdelete(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?gsutil(?:\\.exe|\\.cmd)?\\b.*?\\s(?:rm|rb)(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:docker|podman)(?:\\.exe|\\.cmd)?\\b.*?\\s(?:system\\s+prune|volume\\s+(?:rm|remove|prune))(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?docker(?:-|\\s+)compose(?:\\.exe|\\.cmd)?\\b.*?\\sdown\\b.*\\s(?:-v|--volumes)(?=\\s|$)"
+      }
+    ]
+  },
+  {
+    "id": "secret_read",
+    "name": "Read or print a secret",
+    "touches": "run_commands",
+    "what": "Reads, prints or sends out a password, key or token: {target}",
+    "why": "Anything it prints goes into the conversation and to the AI service, and anything it sends leaves this computer.",
+    "cost": "A key or password could be exposed to others and be misused.",
+    "undo": "only by replacing the key or password with a new one; what was already printed or sent cannot be taken back.",
+    "tier": "impossible",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:cat|type|bat|head|tail|less|more|nl|tac|strings|xxd|od|sed|awk|Get-Content|gc|Select-String|sls|scp|rsync|sftp|base64|sort|cut|jq)(?:\\.exe|\\.cmd)?\\b.*?(?:/proc/(?:self|\\d+)/environ(?![\\w.-])|\\.ssh[/\\\\]\\*|\\.pgpass(?![\\w.-])|\\.config[/\\\\]gh[/\\\\]hosts\\.yml(?![\\w.-])|(?<![\\w.-])\\.env(?:\\.(?!(?:example|sample|template|dist)\\b)[\\w.-]+)?(?![\\w.-])|\\.ssh[/\\\\]id_\\w+(?![\\w.-])|\\.aws[/\\\\]credentials(?![\\w.-])|\\.netrc(?![\\w.-])|\\.docker[/\\\\]config\\.json(?![\\w.-])|\\.kube[/\\\\]config(?![\\w.-])|\\.git-credentials(?![\\w.-])|\\.npmrc(?![\\w.-])|\\.pypirc(?![\\w.-])|\\.(?:key|p12|pfx)(?![\\w.-]))"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:grep|egrep|fgrep|rg|ag)(?:\\.exe|\\.cmd)?\\b.*?(?<!\\\\)(?:/proc/(?:self|\\d+)/environ(?![\\w.-])|\\.ssh[/\\\\]\\*|\\.pgpass(?![\\w.-])|\\.config[/\\\\]gh[/\\\\]hosts\\.yml(?![\\w.-])|(?<![\\w.-])\\.env(?:\\.(?!(?:example|sample|template|dist)\\b)[\\w.-]+)?(?![\\w.-])|\\.ssh[/\\\\]id_\\w+(?![\\w.-])|\\.aws[/\\\\]credentials(?![\\w.-])|\\.netrc(?![\\w.-])|\\.docker[/\\\\]config\\.json(?![\\w.-])|\\.kube[/\\\\]config(?![\\w.-])|\\.git-credentials(?![\\w.-])|\\.npmrc(?![\\w.-])|\\.pypirc(?![\\w.-])|\\.(?:key|p12|pfx)(?![\\w.-]))[\\'\"]?\\s*$"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?curl(?:\\.exe|\\.cmd)?\\b.*?@[^\\s\\'\"@]*(?:/proc/(?:self|\\d+)/environ(?![\\w.-])|\\.ssh[/\\\\]\\*|\\.pgpass(?![\\w.-])|\\.config[/\\\\]gh[/\\\\]hosts\\.yml(?![\\w.-])|(?<![\\w.-])\\.env(?:\\.(?!(?:example|sample|template|dist)\\b)[\\w.-]+)?(?![\\w.-])|\\.ssh[/\\\\]id_\\w+(?![\\w.-])|\\.aws[/\\\\]credentials(?![\\w.-])|\\.netrc(?![\\w.-])|\\.docker[/\\\\]config\\.json(?![\\w.-])|\\.kube[/\\\\]config(?![\\w.-])|\\.git-credentials(?![\\w.-])|\\.npmrc(?![\\w.-])|\\.pypirc(?![\\w.-])|\\.(?:key|p12|pfx)(?![\\w.-]))"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?curl(?:\\.exe|\\.cmd)?\\b.*?(?:-T|--upload-file)(?:=|\\s+)\\S*(?:/proc/(?:self|\\d+)/environ(?![\\w.-])|\\.ssh[/\\\\]\\*|\\.pgpass(?![\\w.-])|\\.config[/\\\\]gh[/\\\\]hosts\\.yml(?![\\w.-])|(?<![\\w.-])\\.env(?:\\.(?!(?:example|sample|template|dist)\\b)[\\w.-]+)?(?![\\w.-])|\\.ssh[/\\\\]id_\\w+(?![\\w.-])|\\.aws[/\\\\]credentials(?![\\w.-])|\\.netrc(?![\\w.-])|\\.docker[/\\\\]config\\.json(?![\\w.-])|\\.kube[/\\\\]config(?![\\w.-])|\\.git-credentials(?![\\w.-])|\\.npmrc(?![\\w.-])|\\.pypirc(?![\\w.-])|\\.(?:key|p12|pfx)(?![\\w.-]))"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:printenv|env|set|export(?:\\s+-p)?|declare\\s+-[px])(?:\\.exe|\\.cmd)?\\s*$"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?printenv(?:\\.exe|\\.cmd)?\\s+\\S*(?:token|secret|key|pass|pwd|credential)\\S*\\s*$"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:docker|podman|kubectl|oc)(?:\\.exe|\\.cmd)?\\b.*?\\sexec\\b.*?\\s(?:printenv|env)\\s*$"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:Get-ChildItem|gci|dir|ls)(?:\\s+-\\S+)*\\s+(?:-Path\\s+)?env:"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:Get-Item|gi)\\s+(?:-Path\\s+)?env:\\w*(?:token|secret|password|passwd|passphrase|_key|apikey|credentials?)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?\\$\\{?env:\\w*?(?:token|secret|password|passwd|passphrase|_key|apikey|credentials?)\\w*\\s*$"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:echo|printf|Write-Output|Write-Host)\\b.*?\\$\\{?(?:env:)?\\w*?(?:token|secret|password|passwd|passphrase|_key|apikey|credentials?)\\b"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?gh(?:\\.exe|\\.cmd)?\\s+auth\\s+token(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?gcloud(?:\\.exe|\\.cmd)?\\b.*?\\sprint-(?:access|identity)-token(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?az(?:\\.exe|\\.cmd)?\\b.*?\\saccount\\s+get-access-token(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?aws(?:\\.exe|\\.cmd)?\\b.*?\\sconfigure\\s+get\\s+\\S*(?:secret|token|key)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?aws(?:\\.exe|\\.cmd)?\\b.*?\\s(?:secretsmanager\\s+get-secret-value|ssm\\s+get-parameters?\\b.*--with-decryption)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?vault(?:\\.exe|\\.cmd)?\\b.*?\\s(?:kv\\s+get|read)(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?op(?:\\.exe|\\.cmd)?\\b.*?\\s(?:read|inject|item\\s+get)(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?gcloud(?:\\.exe|\\.cmd)?\\b.*?\\ssecrets\\s+versions\\s+access(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:kubectl|oc)(?:\\.exe|\\.cmd)?\\b.*?\\sget\\s+secrets?\\b.*?(?:-o|--output)(?:=|\\s*)(?:yaml|json|jsonpath|go-template)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:kubectl|oc)(?:\\.exe|\\.cmd)?\\b.*?\\sget\\b.*?(?:-o|--output)(?:=|\\s*)(?:yaml|json|jsonpath|go-template).*?\\ssecrets?(?=\\s|$)"
+      }
+    ]
+  },
+  {
+    "id": "data_exposure",
+    "name": "Send data out or make it public",
+    "touches": "network",
+    "what": "Opens this computer to the internet, sends data to a public site, or makes storage public: {target}",
+    "why": "Once data or a connection is open to others, you no longer control who sees or uses it.",
+    "cost": "Private files, your computer or your cloud storage could be reached by strangers.",
+    "undo": "you can close the tunnel, remove the upload or switch the setting back, but anything someone already copied cannot be taken back, and some drop sites cannot delete uploads.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:ngrok|cloudflared|lt|localtunnel|bore|zrok|inlets)(?:\\.exe|\\.cmd)?\\s+(?:http|https|tcp|tls|start|tunnel|local|share|--port|--url)(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?frpc(?:\\.exe|\\.cmd)?(?!\\s+(?:-v|--version|-h|--help)(?:\\s|$))(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?npx\\b.*?\\b(?:localtunnel|ngrok|cloudflared)(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?tailscale(?:\\.exe|\\.cmd)?\\s+funnel(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?ssh(?:\\.exe|\\.cmd)?(?=\\s).*?(?:\\s-[A-Za-z]*R\\s*\\S*:\\d+(?=\\s|$)|\\s-o\\s*RemoteForward[=\\s])"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?python3?(?:\\.exe|\\.cmd)?(?=\\s).*?-m\\s+http\\.server\\b.*?(?:--bind|-b)(?:=|\\s+)0\\.0\\.0\\.0"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:curl|wget)(?:\\.exe|\\.cmd)?(?=\\s)(?=.*\\s(?:(?-i:-[FTd])|--form\\S*|--upload-file|--data\\S*|--post-\\w+)).*?(?:://|[\\s\\'\"])(?:www\\.)?(?:pastebin\\.com|transfer\\.sh|0x0\\.st|file\\.io|paste\\.rs|sprunge\\.us|catbox\\.moe|ix\\.io|dpaste\\.\\w+|hastebin\\.com|bashupload\\.com|temp\\.sh|anonfiles\\.com|termbin\\.com)(?![\\w-])"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:nc|ncat|netcat)(?:\\.exe|\\.cmd)?(?=\\s).*?\\s(?:pastebin\\.com|transfer\\.sh|0x0\\.st|file\\.io|paste\\.rs|sprunge\\.us|catbox\\.moe|ix\\.io|dpaste\\.\\w+|hastebin\\.com|bashupload\\.com|temp\\.sh|anonfiles\\.com|termbin\\.com)(?![\\w-])"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?gh(?:\\.exe|\\.cmd)?\\s+gist\\s+create(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?aws(?:\\.exe|\\.cmd)?(?=\\s).*?--acl(?:=|\\s+)(?:public-read|public-read-write|authenticated-read)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?gsutil(?:\\.exe|\\.cmd)?(?=\\s).*?\\b(?:iam\\s+ch|acl\\s+(?:set|ch))\\b.*?all(?:authenticated)?users"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?gcloud(?:\\.exe|\\.cmd)?(?=\\s).*?(?:\\b(?:add-iam-policy-binding|set-iam-policy)\\b|--add-acl-grant).*?all(?:authenticated)?users"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?az(?:\\.exe|\\.cmd)?(?=\\s).*?--public-access(?:=|\\s+)(?:blob|container)"
+      }
+    ]
+  },
+  {
+    "id": "reverse_shell",
+    "name": "Hand control to a remote machine",
+    "touches": "run_commands",
+    "what": "Connects this computer's shell to another machine so it can run commands here: {target}",
+    "why": "Whoever is on the other end can do anything you can do on this computer.",
+    "cost": "Your files, passwords and accounts could be taken or destroyed, and the connection could be used again later.",
+    "undo": "closing the connection does not remove what the other side already did or planted; you would have to treat the computer as compromised.",
+    "tier": "impossible",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "[<>&]\\s*/dev/(?:tcp|udp)/"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:nc|ncat|netcat)(?:\\.exe|\\.cmd)?(?=\\s).*?\\s(?:-e|-c|--exec|--sh-exec)(?:=|\\s|/|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?socat(?:\\.exe|\\.cmd)?(?=\\s).*?\\b(?:exec|system):"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?python3?(?:\\.exe|\\.cmd)?(?=\\s)(?=.*\\bimport\\b.*\\bsocket\\b).*?(?:\\bpty\\b|dup2|subprocess\\.\\w+|os\\.system|/bin/(?:ba)?sh)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:\\S*[\\\\/])?(?:perl|php|ruby|pwsh|powershell)(?:\\.exe|\\.cmd)?(?=\\s).*?(?:\\bSocket\\b|fsockopen|TCPSocket|Net\\.Sockets\\.TCPClient)"
+      }
+    ]
+  },
+  {
+    "id": "safeguard_bypass",
+    "name": "Switch off a safety check",
+    "touches": "run_commands",
+    "what": "Skips or removes a safety check, or erases the record of what was done: {target}",
+    "why": "Checks, protections and logs exist to catch mistakes and to show later what happened.",
+    "cost": "Broken or unreviewed work could go live, and a wiped history or log cannot be recovered.",
+    "undo": "settings can be switched back on, but work that skipped its checks stays unchecked and erased history or logs are gone.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^git(?:\\s+(?:-[Cc]\\s*(?:\"[^\"]*\"|\\'[^\\']*\\'|\\S+)|--[\\w-]+(?:=\\S+)?|-[pP])){0,6}\\s+(?:commit|push|merge|rebase|cherry-pick|revert|am)(?:\\s+(?:\"[^\"]*\"|\\'[^\\']*\\'|[^\\s\"\\']\\S*))*?\\s+--no-verify(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^git(?:\\s+(?:-[Cc]\\s*(?:\"[^\"]*\"|\\'[^\\']*\\'|\\S+)|--[\\w-]+(?:=\\S+)?|-[pP])){0,6}\\s+commit(?:\\s+(?:\"[^\"]*\"|\\'[^\\']*\\'|[^\\s\"\\']\\S*))*?\\s+(?-i:-[A-Za-z]*n[A-Za-z]*)(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^git(?=\\s).*?core\\.hooksPath(?:=|\\s+)(?:/dev/null|nul|\"\"|\\'\\')(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^gh\\s+pr\\s+merge\\b.*?\\s--admin(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^gh\\s+api(?=\\s)(?=.*\\s(?:-X|--method)(?:=|\\s*)DELETE\\b).*/protection"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^gh\\s+ruleset\\s+delete(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^history\\s+-c(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^unset\\s+HISTFILE(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^set\\s+\\+o\\s+history(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^Clear-History(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:truncate(?=\\s).*?|:\\s*>\\s*|(?:cat\\s+/dev/null\\s+)?>{1,2}\\s*)\\S*(?:_history|\\.history)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^journalctl(?=\\s).*?\\s--vacuum-\\w+"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^wevtutil\\s+cl\\b"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^Clear-EventLog\\b"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^git(?:\\s+(?:-[Cc]\\s*(?:\"[^\"]*\"|\\'[^\\']*\\'|\\S+)|--[\\w-]+(?:=\\S+)?|-[pP])){0,6}\\s+reflog\\s+expire\\b.*?--expire=now"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^git(?:\\s+(?:-[Cc]\\s*(?:\"[^\"]*\"|\\'[^\\']*\\'|\\S+)|--[\\w-]+(?:=\\S+)?|-[pP])){0,6}\\s+gc\\b.*?--prune=now"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^Set-ExecutionPolicy\\s+(?:\\S+\\s+)*?(?:Bypass|Unrestricted)\\b"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:powershell|pwsh)(?:\\.exe)?(?=\\s).*?\\s-(?:ExecutionPolicy|exec\\w*|ep)\\s+(?:Bypass|Unrestricted)\\b"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:ssh|scp|sftp|rsync)(?:\\.exe)?(?=\\s).*?(?:StrictHostKeyChecking(?:=|\\s+)(?:no|off)\\b|UserKnownHostsFile(?:=|\\s+)/dev/null)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^ssh-keyscan(?=\\s)[^>]*>>?\\s*\\S*known_hosts"
+      },
+      {
+        "tool": "Bash",
+        "scope": "whole",
+        "pattern": "(?:^|[\\s;&|])(?:export\\s+)?HISTFILE=(?:/dev/null|\"\")?(?=\\s|$|[;&|])"
+      },
+      {
+        "tool": "Bash",
+        "scope": "whole",
+        "pattern": "(?:^|[\\s;&|])(?:export\\s+)?HIST(?:FILE)?SIZE=0(?=\\s|$|[;&|])"
+      },
+      {
+        "tool": "Bash",
+        "scope": "whole",
+        "pattern": "(?:^|[\\s;&|])(?:HUSKY=0|HUSKY_SKIP_HOOKS=1)(?=\\s|$|[;&|])"
+      },
+      {
+        "tool": "Bash",
+        "scope": "whole",
+        "pattern": "(?:^|[\\s;&|])SKIP=\\S+\\s+(?:git\\s+commit|pre-commit)\\b"
+      }
+    ]
+  },
+  {
+    "id": "test_tampering",
+    "name": "Weaken or skip tests",
+    "touches": "run_commands",
+    "what": "Changes tests or test settings so that problems stay hidden: {target}",
+    "why": "Tests are how you find out something broke; weakening them makes a broken app look fine.",
+    "cost": "Bugs could ship without anyone noticing.",
+    "undo": "git can restore test files and settings, but rewritten snapshots and anything pushed without checks stay as they are until you fix them.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:(?:npx|pnpm|yarn|bun|npm|uv|uvx|poetry|pipenv|python3?\\s+-m)\\s+(?:run\\s+|exec\\s+|dlx\\s+)?)?(?:jest|vitest|playwright|pytest|py\\.test|nyc|c8|tox|test(?::\\S+)?)(?=\\s).*?(?:\\s(?-i:-u)(?=\\s|$)|\\s--update(?:Snapshot|-snapshots?(?:=all)?)?(?=\\s|$)|\\s--snapshot-update(?=\\s|$))"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^cargo(?=\\s).*?\\sinsta\\s+(?:accept\\b|test\\b.*?--accept\\b)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:(?:npx|pnpm|yarn|bun|npm|uv|uvx|poetry|pipenv|python3?\\s+-m)\\s+(?:run\\s+|exec\\s+|dlx\\s+)?)?(?:jest|vitest|playwright|pytest|py\\.test|nyc|c8|tox|test(?::\\S+)?)(?=\\s).*?\\s(?:--passWithNoTests(?!=false)|--pass-with-no-tests|--no-cov(?!-on-fail)|--cov-fail-under(?:=|\\s+)0(?!\\d)|--(?:coverage|collectCoverage)(?:=|\\s+)false|--coverage\\.enabled=false|--no-coverage|--check-coverage=false|--no-check-coverage|--coverage\\.thresholds\\.\\w+\\s+0(?!\\d))(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^git(?:\\s+(?:-[Cc]\\s*(?:\"[^\"]*\"|\\'[^\\']*\\'|\\S+)|--[\\w-]+(?:=\\S+)?|-[pP])){0,6}\\s+commit\\b.*?\\[(?:skip ci|ci skip|skip actions|actions skip|no ci)\\]"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:sed|perl)(?=\\s)(?=.*\\s-[A-Za-z]*i).*?(?:\\.skip\\(|@pytest\\.mark\\.skip|@ts-nocheck|\\bnoqa\\b|type:\\s*ignore|#\\[ignore\\]|eslint-disable|\\bxit\\(|\\bxdescribe\\()"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^git(?:\\s+(?:-[Cc]\\s*(?:\"[^\"]*\"|\\'[^\\']*\\'|\\S+)|--[\\w-]+(?:=\\S+)?|-[pP])){0,6}\\s+rm(?:\\s+-\\S+)*(?:\\s+\\S+)*?\\s+\\S*(?:(?<![\\w-])tests?(?:[/\\\\]|(?=\\s|$))|__tests__|(?<![\\w-])specs?[/\\\\]|\\.(?:test|spec)\\.|_test\\.|(?<![\\w.-])test_)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "whole",
+        "pattern": "\\bINSTA_UPDATE=always\\b"
+      }
+    ]
+  },
+  {
+    "id": "agent_autonomy",
+    "name": "Start another agent or give one more freedom",
+    "touches": "delegate",
+    "what": "Starts another AI agent, turns off an agent's approvals, or adds a tool server to it: {target}",
+    "why": "An agent started this way works on its own, and with approvals turned off it can act without asking you.",
+    "cost": "It could change files or run commands with no one watching, and a tool server can read what you give it.",
+    "undo": "stop the agent and undo its changes with git or a saved copy; a tool server can be removed, but what it already read is out.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:(?:npx|bunx|pnpm\\s+dlx|yarn\\s+dlx)\\s+(?:-y\\s+)?)?(?:\\S*[\\\\/])?(?:claude(?:-code)?|codex|gemini(?:-cli)?|aider|opencode|cursor-agent|goose)(?:\\.exe|\\.cmd)?(?=\\s).*?\\s(?:--dangerously-[\\w-]+|--yolo|--full-auto|--yes(?:-always)?|--approval-mode(?:=|\\s+)yolo|(?-i:-a)(?:=|\\s+)never|--ask-for-approval(?:=|\\s+)never|--permission-mode(?:=|\\s+)bypassPermissions|(?:--sandbox|(?-i:-s))(?:=|\\s+)danger-full-access)(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:(?:npx|bunx|pnpm\\s+dlx|yarn\\s+dlx)\\s+(?:-y\\s+)?)?(?:\\S*[\\\\/])?(?:claude(?:-code)?|cursor-agent)(?:\\.exe|\\.cmd)?(?=\\s).*?\\s(?:(?-i:-p)|--print)(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:(?:npx|bunx|pnpm\\s+dlx|yarn\\s+dlx)\\s+(?:-y\\s+)?)?(?:\\S*[\\\\/])?codex(?:\\.exe|\\.cmd)?\\s+(?:\\S+\\s+)*?exec(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:(?:npx|bunx|pnpm\\s+dlx|yarn\\s+dlx)\\s+(?:-y\\s+)?)?(?:\\S*[\\\\/])?gemini(?:-cli)?(?:\\.exe|\\.cmd)?(?=\\s).*?\\s(?:(?-i:-p)|--prompt)(?=\\s|=|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:(?:npx|bunx|pnpm\\s+dlx|yarn\\s+dlx)\\s+(?:-y\\s+)?)?(?:\\S*[\\\\/])?aider(?:\\.exe|\\.cmd)?(?=\\s).*?\\s(?:--message(?:-file)?|(?-i:-m)|(?-i:-f))(?=\\s|=|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:(?:npx|bunx|pnpm\\s+dlx|yarn\\s+dlx)\\s+(?:-y\\s+)?)?(?:\\S*[\\\\/])?opencode(?:\\.exe|\\.cmd)?\\s+run(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^(?:(?:npx|bunx|pnpm\\s+dlx|yarn\\s+dlx)\\s+(?:-y\\s+)?)?(?:\\S*[\\\\/])?(?:claude(?:-code)?|codex|gemini(?:-cli)?)(?:\\.exe|\\.cmd)?(?=\\s).*?\\smcp\\s+add(?:-json)?(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "whole",
+        "pattern": "\\bAIDER_YES_ALWAYS=(?:true|1|yes)\\b"
+      }
+    ]
+  },
+  {
+    "id": "agent_config_edit",
+    "name": "Change what an agent follows",
+    "touches": "protected_paths",
+    "what": "Edits an agent's standing instructions, tools, skills or memory: {target}",
+    "why": "The agent reads this when it starts or when it needs it, so one edit can shape all of its later work.",
+    "cost": "A bad or sneaky instruction could quietly change what the agent does from now on.",
+    "undo": "restore the file with git or a saved copy, and check what the agent did in the meantime.",
+    "tier": "hard",
+    "decided_by": [
+      "you"
+    ],
+    "lasts": "once",
+    "matchers": [
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)(?:CLAUDE(?:\\.local)?|AGENTS?(?:\\.override)?|GEMINI)\\.md(?:[. ]+|::\\$\\w+)*$"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)(?:\\.cursorrules|\\.windsurfrules|\\.clinerules|\\.aider\\.conf\\.ya?ml)(?:[. ]+|::\\$\\w+)*$"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)\\.clinerules/"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)\\.github/(?:copilot-instructions\\.md(?:[. ]+|::\\$\\w+)*$|instructions/|prompts/|agents/|chatmodes/)"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)\\.(?:cursor|windsurf|devin|roo)/rules/"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)\\.kiro/steering/"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)(?:\\.mcp\\.json|\\.(?:cursor|vscode|windsurf|roo|kiro)/mcp\\.json)(?:[. ]+|::\\$\\w+)*$"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)(?:\\.claude\\.json|opencode\\.json|\\.codex/config\\.toml|\\.gemini/settings\\.json)(?:[. ]+|::\\$\\w+)*$"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)\\.(?:agents|codex|gemini|cursor|windsurf|cline)/(?:skills|commands|agents|prompts|workflows)/"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)skills/[^/]+/SKILL\\.md(?:[. ]+|::\\$\\w+)*$"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)\\.(?:codex|gemini|cursor)/(?:memories|memory)/"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)\\.gemini/tmp/[^/]+/memory/"
+      },
+      {
+        "tool": "Write|Edit|MultiEdit|NotebookEdit",
+        "scope": "path",
+        "pattern": "(?:^|/)\\.codeium/windsurf/(?:memories|global_workflows)/"
+      }
+    ]
   }
 ]
