@@ -3,18 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sure? Control Room</title>
+<title>Sure? Approvals</title>
 <link rel="stylesheet" href="/static/style.css">
 <script src="/static/app.js" defer></script>
 </head>
 <body>
 <header class="top">
   <div class="brand">
-    <span class="brand-mark" aria-hidden="true"></span>
-    <div>
-      <h1>Sure? <span class="brand-sub">Control Room</span></h1>
-      <p class="tagline">Every risky step waits at the fence until you decide. Drag a card onto a gate, or use its buttons.</p>
-    </div>
+    <h1>Sure? <span class="brand-sub">Approvals</span></h1>
+    <p class="tagline">Decide each risky request. Drag a card to a zone at the bottom, or use its buttons.</p>
   </div>
   <p class="status" id="status">Connecting</p>
 </header>
@@ -25,7 +22,7 @@
 </div>
 
 <main>
-  <div class="notice glass" id="notice" hidden>
+  <div class="notice panel-card" id="notice" hidden>
     <h2>No board key</h2>
     <p>Open the board using the URL printed by <code>sure.py board</code>. That link carries the key this page needs; the key is not stored in the page itself.</p>
   </div>
@@ -33,42 +30,42 @@
   <div class="stale-banner" id="stale" role="alert" hidden>Board unreachable: decisions will fall back to Claude's prompt.</div>
 
   <div id="panel-live" class="panel" role="tabpanel" aria-labelledby="tab-live" tabindex="0" hidden>
-    <section id="flow-map" class="glass flow" aria-labelledby="h-flow" hidden>
+    <section id="board" class="board" aria-label="Decision board" hidden>
+      <section class="col" data-col="needs_me" aria-labelledby="h-needs_me">
+        <h2 id="h-needs_me" tabindex="-1">Waiting for you <span class="col-sub">Decide these</span> <span class="count" data-count="needs_me">0</span></h2>
+        <ol class="cards" data-list="needs_me"></ol>
+      </section>
+      <section class="col" data-col="incoming" aria-labelledby="h-incoming">
+        <h2 id="h-incoming" tabindex="-1">Incoming <span class="col-sub">Just arrived</span> <span class="count" data-count="incoming">0</span></h2>
+        <ol class="cards" data-list="incoming"></ol>
+      </section>
+      <section class="col" data-col="delegated" aria-labelledby="h-delegated">
+        <h2 id="h-delegated" tabindex="-1">Handled by rules <span class="col-sub">Saved rules (see Replay)</span> <span class="count" data-count="delegated">0</span></h2>
+        <ol class="cards" data-list="delegated"></ol>
+      </section>
+      <section class="col" data-col="done" aria-labelledby="h-done">
+        <h2 id="h-done" tabindex="-1">Done <span class="col-sub">Allowed or sent to Claude</span> <span class="count" data-count="done">0</span></h2>
+        <ol class="cards" data-list="done"></ol>
+      </section>
+      <section class="col" data-col="declined" aria-labelledby="h-declined">
+        <h2 id="h-declined" tabindex="-1">Blocked <span class="col-sub">Stopped here</span> <span class="count" data-count="declined">0</span></h2>
+        <ol class="cards" data-list="declined"></ol>
+      </section>
+    </section>
+
+    <section id="flow-map" class="panel-card flow" aria-labelledby="h-flow" hidden>
       <h2 id="h-flow">Flow map <span class="col-sub">Sessions, then kinds, then who decided</span></h2>
       <div class="flow-scroll" id="live-flow"></div>
     </section>
 
-    <section id="trusted-strip" class="glass strip" aria-labelledby="h-trusted" hidden>
+    <section id="trusted-strip" class="panel-card strip" aria-labelledby="h-trusted" hidden>
       <h2 id="h-trusted" tabindex="-1">Trusted kinds <span class="col-sub">Always allowed in these projects</span></h2>
       <div id="trusted-list"></div>
-    </section>
-
-    <section id="board" class="board" aria-label="Decision board" hidden>
-      <section class="col glass" data-col="incoming" aria-labelledby="h-incoming">
-        <h2 id="h-incoming" tabindex="-1">Incoming <span class="col-sub">At the gate</span> <span class="count" data-count="incoming">0</span></h2>
-        <ol class="cards" data-list="incoming"></ol>
-      </section>
-      <section class="col glass" data-col="needs_me" aria-labelledby="h-needs_me">
-        <h2 id="h-needs_me" tabindex="-1">Needs me <span class="col-sub">Holding pen</span> <span class="count" data-count="needs_me">0</span></h2>
-        <ol class="cards" data-list="needs_me"></ol>
-      </section>
-      <section class="col glass" data-col="delegated" aria-labelledby="h-delegated">
-        <h2 id="h-delegated" tabindex="-1">Delegated <span class="col-sub">Saved rules (see Replay)</span> <span class="count" data-count="delegated">0</span></h2>
-        <ol class="cards" data-list="delegated"></ol>
-      </section>
-      <section class="col glass" data-col="done" aria-labelledby="h-done">
-        <h2 id="h-done" tabindex="-1">Done <span class="col-sub">Released</span> <span class="count" data-count="done">0</span></h2>
-        <ol class="cards" data-list="done"></ol>
-      </section>
-      <section class="col glass" data-col="declined" aria-labelledby="h-declined">
-        <h2 id="h-declined" tabindex="-1">Declined <span class="col-sub">Contained</span> <span class="count" data-count="declined">0</span></h2>
-        <ol class="cards" data-list="declined"></ol>
-      </section>
     </section>
   </div>
 
   <div id="panel-replay" class="panel" role="tabpanel" aria-labelledby="tab-replay" tabindex="0" hidden>
-    <section class="glass block" aria-labelledby="h-replay">
+    <section class="panel-card block" aria-labelledby="h-replay">
       <h2 id="h-replay">Replay <span class="col-sub">What was asked, and who decided</span></h2>
       <p class="hint" id="replay-empty" hidden>Replay needs a project folder the board has seen. Once Claude asks for something in a project, that folder shows up here.</p>
       <div class="controls">
@@ -92,15 +89,15 @@
     <p class="hint replay-showing" id="replay-showing" role="status" hidden></p>
 
     <div id="replay-out" hidden>
-      <section class="glass flow" aria-labelledby="h-replay-flow">
+      <section class="panel-card flow" aria-labelledby="h-replay-flow">
         <h2 id="h-replay-flow">Flow map <span class="col-sub">For the chosen range</span></h2>
         <div class="flow-scroll" id="replay-flow"></div>
       </section>
-      <section class="glass block" aria-labelledby="h-replay-report">
+      <section class="panel-card block" aria-labelledby="h-replay-report">
         <h2 id="h-replay-report">Report</h2>
         <pre class="report" id="replay-report"></pre>
       </section>
-      <section class="glass block" aria-labelledby="h-replay-events">
+      <section class="panel-card block" aria-labelledby="h-replay-events">
         <h2 id="h-replay-events">Events</h2>
         <p class="hint" id="replay-note"></p>
         <div class="table-scroll">
@@ -114,7 +111,7 @@
   </div>
 </main>
 
-<div class="zones glass" id="zones" aria-hidden="true">
+<div class="zones" id="zones" aria-hidden="true">
   <div class="zone zone-block" data-decision="block"><strong>Block</strong><span>Stop it here</span></div>
   <div class="zone zone-ask" data-decision="ask"><strong>Ask Claude</strong><span>Use Claude's own prompt</span></div>
   <div class="zone zone-once" data-decision="allow_once"><strong>Allow once</strong><span>Just this time</span></div>

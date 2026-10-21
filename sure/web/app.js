@@ -604,6 +604,13 @@ function titleOf(c) {
   return c.what || (c.tool ? c.tool + " request" : "Request");
 }
 
+// "Description: target" -> the plain description; the exact target is shown in the command block
+function descOf(c) {
+  const w = titleOf(c);
+  const i = w.indexOf(": ");
+  return i > 0 ? w.slice(0, i) : w;
+}
+
 function buttonsFor(c) {
   const t = tierOf(c);
   if (t === "impossible") return ["block", "allow_once"]; // server refuses ask here too
@@ -616,22 +623,6 @@ function zonesFor(c) {
   return tierOf(c) === "impossible" ? ["block"] : buttonsFor(c);
 }
 
-function hue(s) {
-  let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return h % 360;
-}
-
-function avatar(session) {
-  const s = String(session || "");
-  const initials = (s.replace(/[^A-Za-z0-9]/g, "").slice(0, 2) || "?").toUpperCase();
-  const a = el("span", "avatar", initials);
-  a.style.setProperty("--av-h", String(hue(s)));
-  a.title = s ? "Session " + s : "Unknown session";
-  a.setAttribute("aria-hidden", "true");
-  return a;
-}
-
 function buildCard(entry) {
   const c = entry.c;
   const t = tierOf(c);
@@ -639,21 +630,16 @@ function buildCard(entry) {
   const li = el("li", "card tier-" + t + (live ? " live" : ""));
   li.dataset.rid = c.request_id;
 
-  if (t === "impossible" && live) {
-    li.append(el("p", "banner", "Cannot be undone. Block unless you are certain; Allow once asks you to confirm."));
-  }
-
-  const head = el("div", "card-head");
-  head.append(avatar(c.session), el("h3", "card-title", titleOf(c)));
-  li.append(head);
-
   const meta = el("p", "meta");
   const badge = el("span", "tier-badge");
   badge.append(el("span", "tier-icon"), document.createTextNode(TIERS[t].label));
   badge.title = TIERS[t].note;
   meta.append(badge, el("span", "kind", c.kind || "unknown kind"),
-    el("span", "session", "Session " + (String(c.session || "").slice(0, 8) || "unknown")));
+    el("span", "session", String(c.session || "").slice(0, 8) || "unknown session"));
   li.append(meta);
+  li.append(el("h3", "card-title", descOf(c)));
+  if (c.command) li.append(el("pre", "cmd", c.command)); // what will actually run, always visible
+  if (live && c.undo) li.append(el("p", "undo-line", c.undo.replace(/^(?:Easy|Hard|Impossible): */, "")));
 
   const status = el("p", "wait");
   if (!live) status.textContent = (DONE_TEXT[c.decision] || "Released") + " · " + (OUTCOMES[c.outcome] || c.outcome || "");

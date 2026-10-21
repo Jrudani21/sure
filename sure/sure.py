@@ -705,6 +705,17 @@ def main(argv, stdin_text, cwd):
         return ""
 
 
+def check(args):
+    """Dry run: the card Sure? would show for a command, or for a file with `--path <file>`. Nothing is run or written."""
+    if args[:1] == ["--path"] and len(args) > 1:
+        risk = classify("Write", {"file_path": args[1]})
+    else:
+        risk = classify("Bash", {"command": " ".join(args)})
+    if not risk:
+        return "Sure? would stay quiet: no card for this."
+    return f"{render_card(risk)}\nKIND: {risk['kind']} ({risk['tier']})"
+
+
 def _cli_fail(what, e):
     try:
         sys.stderr.write(f"sure: {what} failed: {type(e).__name__}: {' '.join(str(e).split())[:200]}\n")
@@ -742,6 +753,9 @@ def _cli(args):
 
 if __name__ == "__main__":
     try:
+        if sys.argv[1:2] == ["check"]:
+            print(check(sys.argv[2:]))
+            sys.exit(0)
         if sys.argv[1:2] == ["stats"]:
             print(stats(str(Path.cwd())))
             sys.exit(0)

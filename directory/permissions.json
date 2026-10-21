@@ -423,7 +423,7 @@
     "what": "Changes or removes servers, cloud resources or containers: {target}",
     "why": "These commands act on live systems, often with no confirmation and no recycle bin.",
     "cost": "A website, database or cloud account could go down, lose data, or start costing money.",
-    "undo": "only if you have a backup or can rebuild it from your configuration; a few actions, such as a rollback or a drain, can be reversed by hand.",
+    "undo": "only from a backup or by rebuilding it from your config; a rollback or drain can be reversed by hand.",
     "tier": "impossible",
     "decided_by": [
       "you"
@@ -487,9 +487,9 @@
     "name": "Read or print a secret",
     "touches": "run_commands",
     "what": "Reads, prints or sends out a password, key or token: {target}",
-    "why": "Anything it prints goes into the conversation and to the AI service, and anything it sends leaves this computer.",
+    "why": "Anything it prints goes into the chat and to the AI service, and anything it sends leaves this computer.",
     "cost": "A key or password could be exposed to others and be misused.",
-    "undo": "only by replacing the key or password with a new one; what was already printed or sent cannot be taken back.",
+    "undo": "only by replacing the key or password; what was already shown or sent cannot be taken back.",
     "tier": "impossible",
     "decided_by": [
       "you"
@@ -607,10 +607,10 @@
     "id": "data_exposure",
     "name": "Send data out or make it public",
     "touches": "network",
-    "what": "Opens this computer to the internet, sends data to a public site, or makes storage public: {target}",
+    "what": "Opens this computer to the internet, posts data to a public site, or makes storage public: {target}",
     "why": "Once data or a connection is open to others, you no longer control who sees or uses it.",
     "cost": "Private files, your computer or your cloud storage could be reached by strangers.",
-    "undo": "you can close the tunnel, remove the upload or switch the setting back, but anything someone already copied cannot be taken back, and some drop sites cannot delete uploads.",
+    "undo": "close the tunnel or take the upload down, but anything already copied is out.",
     "tier": "hard",
     "decided_by": [
       "you"
@@ -688,10 +688,10 @@
     "id": "reverse_shell",
     "name": "Hand control to a remote machine",
     "touches": "run_commands",
-    "what": "Connects this computer's shell to another machine so it can run commands here: {target}",
+    "what": "Lets another machine run commands on this computer: {target}",
     "why": "Whoever is on the other end can do anything you can do on this computer.",
     "cost": "Your files, passwords and accounts could be taken or destroyed, and the connection could be used again later.",
-    "undo": "closing the connection does not remove what the other side already did or planted; you would have to treat the computer as compromised.",
+    "undo": "closing the connection does not undo what was done; treat the computer as compromised.",
     "tier": "impossible",
     "decided_by": [
       "you"
@@ -732,7 +732,7 @@
     "what": "Skips or removes a safety check, or erases the record of what was done: {target}",
     "why": "Checks, protections and logs exist to catch mistakes and to show later what happened.",
     "cost": "Broken or unreviewed work could go live, and a wiped history or log cannot be recovered.",
-    "undo": "settings can be switched back on, but work that skipped its checks stays unchecked and erased history or logs are gone.",
+    "undo": "switch the check back on, but unchecked work stays unchecked and erased history is gone.",
     "tier": "hard",
     "decided_by": [
       "you"
@@ -868,7 +868,7 @@
     "what": "Changes tests or test settings so that problems stay hidden: {target}",
     "why": "Tests are how you find out something broke; weakening them makes a broken app look fine.",
     "cost": "Bugs could ship without anyone noticing.",
-    "undo": "git can restore test files and settings, but rewritten snapshots and anything pushed without checks stay as they are until you fix them.",
+    "undo": "git restores test files, but rewritten snapshots and untested pushes need fixing by hand.",
     "tier": "hard",
     "decided_by": [
       "you"
@@ -919,7 +919,7 @@
     "what": "Starts another AI agent, turns off an agent's approvals, or adds a tool server to it: {target}",
     "why": "An agent started this way works on its own, and with approvals turned off it can act without asking you.",
     "cost": "It could change files or run commands with no one watching, and a tool server can read what you give it.",
-    "undo": "stop the agent and undo its changes with git or a saved copy; a tool server can be removed, but what it already read is out.",
+    "undo": "stop the agent and undo its changes with git; what a tool server already read is out.",
     "tier": "hard",
     "decided_by": [
       "you"
@@ -975,7 +975,7 @@
     "what": "Edits an agent's standing instructions, tools, skills or memory: {target}",
     "why": "The agent reads this when it starts or when it needs it, so one edit can shape all of its later work.",
     "cost": "A bad or sneaky instruction could quietly change what the agent does from now on.",
-    "undo": "restore the file with git or a saved copy, and check what the agent did in the meantime.",
+    "undo": "restore the file from git, then check what the agent did meanwhile.",
     "tier": "hard",
     "decided_by": [
       "you"
