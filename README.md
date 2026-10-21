@@ -58,16 +58,14 @@ A safe command prints `Sure? would stay quiet: no card for this.`
 ## How it works
 
 ```mermaid
-flowchart LR
-    A[Claude Code wants to run a tool] --> B{Sure? hook<br/>pattern check}
-    B -- safe --> C[Runs, nothing shown]
-    B -- risky --> D[Plain-English card<br/>what, why, cost, undo, tier]
-    D --> E{Board on?}
-    E -- no --> F[Claude Code's own prompt<br/>shows the card]
-    E -- yes --> G[Card waits on the board<br/>up to 120 s]
-    G -- Allow once --> H[Runs once]
-    G -- Block --> I[Blocked]
-    G -- no answer --> F
+flowchart TD
+    A[Claude Code wants to run a tool] --> B{Sure? checks it}
+    B -- safe --> C[It runs and nothing is shown]
+    B -- risky --> D[Card: what, why, cost, undo and tier]
+    D --> E{Is the board on?}
+    E -- yes --> G[You decide on the board: Allow once or Block]
+    E -- no --> F[Claude Code shows the card in its own prompt]
+    G -- no answer in 120 s --> F
 ```
 
 Every card has a **tier** that says how bad a mistake would be:
