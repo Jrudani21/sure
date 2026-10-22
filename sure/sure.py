@@ -756,6 +756,14 @@ if __name__ == "__main__":
         if sys.argv[1:2] == ["check"]:
             print(check(sys.argv[2:]))
             sys.exit(0)
+        if sys.argv[1:2] == ["status"]:
+            import status
+            print(status.main(sys.argv[2:]))
+            sys.exit(0)
+        if sys.argv[1:2] == ["scan"]:
+            import scan
+            print(scan.main(sys.argv[2:]))
+            sys.exit(0)
         if sys.argv[1:2] == ["stats"]:
             print(stats(str(Path.cwd())))
             sys.exit(0)

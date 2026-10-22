@@ -82,14 +82,23 @@ def read_manifest(cwd):
 
 
 _USERINFO = re.compile(r"(?<=://)[^\s/?#]+@")  # greedy: up to the LAST @ before the host, so "p@ss@" goes too
-_SECRET = re.compile(r"\b(?:(?:ghp_|gho_|github_pat_|sk-|glpat-)[\w-]{20,}|AKIA[0-9A-Z]{16}\b|xox[bap]-[\w-]{10,})")
-_BEARER = re.compile(r"\b(Bearer\s+)[\w.~+/=-]{20,}")
-_ASSIGN = re.compile(r"(?<![A-Za-z0-9])(password|passwd|token|secret)=[^\s&'\"]+", re.I)
+_SECRET = re.compile(
+    r"\b(?:(?:ghp_|gho_|github_pat_|sk-|glpat-)[\w-]{20,}|AKIA[0-9A-Z]{16}\b|xox[bap]-[\w-]{10,}"
+    r"|AIza[\w-]{30,}|hf_\w{20,}|npm_\w{30,}|sk_live_\w{20,}|eyJ[\w-]+\.eyJ[\w-]+\.[\w-]+)"
+)
+_BEARER = re.compile(r"\b((?:Bearer|Basic)\s+)[\w.~+/=-]{8,}", re.I)
+_ASSIGN = re.compile(
+    r"((?:pass(?:wd|word)?|token|secret|api[_-]?key|access[_-]?key|credential)s?\w*\s*[=:]\s*)"
+    r"(?:\"[^\"]*\"|'[^']*'|[^\s&]+)",
+    re.I,
+)
+_FLAG = re.compile(r"(--(?:password|token|secret)[= ])\S+|(\s-u\s*[^\s:]+:)\S+", re.I)
 
 
 def _mask(s):
     s = _USERINFO.sub("***@", s)
-    return _ASSIGN.sub(r"\1=***", _BEARER.sub(r"\1***", _SECRET.sub("***", s)))
+    s = _FLAG.sub(lambda m: (m.group(1) or m.group(2)) + "***", _SECRET.sub("***", s))
+    return _ASSIGN.sub(r"\1***", _BEARER.sub(r"\1***", s))
 
 
 def clean(text, keep_newlines=False):

@@ -194,6 +194,8 @@ Several good open-source tools guard coding agents. They solve overlapping probl
 
 ```bash
 python sure/sure/sure.py check <command>   # show the card for a command without running it (--path <file> for a file)
+python sure/sure/sure.py status            # is the hook installed and healthy, this project's options, recent decisions
+python sure/sure/sure.py scan [--days 30] [--html report.html]   # replay your Claude Code history through today's rules (read-only)
 python sure/sure/sure.py stats          # asked / ran / approval rate per kind (run in a project)
 python sure/sure/sure.py report 7       # last 7 days in plain words, with a nudge if you approve almost everything
 python sure/sure/sure.py undo 1         # restore save point 1 (needs save points; it does not delete new files)
