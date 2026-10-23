@@ -118,3 +118,20 @@ def test_days_picker_offers_exact_ranges():
 def test_fetch_has_timeout():
     js = text("app.js")
     assert "AbortController" in js and "8000" in js
+
+
+def _css_block(css, selector):
+    m = re.search(re.escape(selector) + r"\s*\{([^}]*)\}", css)
+    return m.group(1) if m else ""
+
+
+def _px(block, prop):
+    m = re.search(r"(?<![\w-])" + prop + r":\s*(\d+)px", block)
+    return int(m.group(1)) if m else 0
+
+
+def test_details_toggle_meets_the_minimum_target_size():
+    css = text("style.css")
+    assert _px(_css_block(css, ".expand"), "min-height") >= 24  # WCAG 2.2 AA, target size minimum
+    coarse = css[css.index("@media (pointer: coarse)"):]
+    assert _px(_css_block(coarse, ".expand"), "min-height") >= 44  # touch screens
