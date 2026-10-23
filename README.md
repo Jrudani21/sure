@@ -186,9 +186,9 @@ Several good open-source tools guard coding agents. They solve overlapping probl
 
 **Choose Sure? when** you want every risky action explained in plain words with an undo answer, a local board to decide on, a tool built and tested on Windows, and nothing to install beyond Python.
 
-**Choose another when** you need more rules today (Guard), real shell parsing or many different agents (cc-safety-net), or policy as code and enterprise controls (Cupcake).
+**Choose another when** you need more rules today (Guard), real shell parsing or many different agents (cc-safety-net), policy as code and enterprise controls (Cupcake), a real parser for many shells ([vouch](https://github.com/polston/vouch)), auto-approval of known-safe commands ([Dippy](https://github.com/sebb3/Dippy)), or the most packs and agents ([dcg](https://github.com/Dicklesworthstone/destructive_command_guard)).
 
-**Where Sure? is behind:** the public repo supports Claude Code only, detection is pattern matching and not a shell parser, and it does not yet have custom rules with a test runner, a transcript scan report, or a status/doctor command. Those are on the list, and the gaps above are listed on purpose so you can judge it for what it is.
+**Where Sure? is behind:** the public repo supports Claude Code only, detection is pattern matching and not a shell parser, and it does not yet have custom rules with a test runner. Common shell disguises (`r''m`, `$IFS`, `$(echo rm)`, variables used as the command) are unwrapped before the rules run, but nothing beyond that is simulated. That is on the list, and the gaps above are listed on purpose so you can judge it for what it is.
 
 ## Commands
 
