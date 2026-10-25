@@ -7,6 +7,7 @@ Anything running as the owner can still read this file: this is friction against
 Best effort: the read-modify-write of the state file is atomic but not locked, so two writers at the same instant can drop an update.
 """
 import base64
+import contextlib
 import hashlib
 import hmac
 import json
@@ -15,6 +16,16 @@ import tempfile
 import time
 from pathlib import Path
 
+try:
+    import msvcrt  # Windows
+except ImportError:
+    msvcrt = None
+try:
+    import fcntl  # POSIX
+except ImportError:
+    fcntl = None
+
+LOCK_WAIT = 3  # seconds a writer waits for the state lock before going on without it: a hook must never hang
 TTL = 600  # seconds a code, and an allowance after redeeming, stays valid
 MAX_FAILS = 5  # wrong codes in a row before a lock of TTL seconds
 MAX_PENDING = 20
@@ -25,6 +36,41 @@ def _file():
     d = Path(base) / ".sure"  # a .sure/ path is already guarded: an agent writing here gets a card
     d.mkdir(parents=True, exist_ok=True)
     return d / "allow.json"
+
+
+@contextlib.contextmanager
+def _lock():
+    """Exclusive lock around one read-modify-write of the state file, so two processes cannot drop each other's update.
+    Yields whether it got the lock; after LOCK_WAIT seconds it carries on unlocked (best effort) instead of hanging."""
+    f = open(_file().with_name("allow.json.lock"), "a+b")
+    got, deadline = False, time.time() + LOCK_WAIT
+    while not got:
+        try:
+            if msvcrt:
+                f.seek(0)
+                msvcrt.locking(f.fileno(), msvcrt.LK_NBLCK, 1)
+            elif fcntl:
+                fcntl.flock(f, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            else:
+                break  # no locking primitive on this platform
+            got = True
+        except OSError:
+            if time.time() > deadline:
+                break
+            time.sleep(0.02)
+    try:
+        yield got
+    finally:
+        if got:
+            try:
+                if msvcrt:
+                    f.seek(0)
+                    msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(f, fcntl.LOCK_UN)
+            except OSError:
+                pass
+        f.close()
 
 
 def _load():
@@ -45,7 +91,14 @@ def _save(d):
     try:
         with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
             json.dump(d, f)
-        os.replace(tmp, str(p))
+        for attempt in range(5):
+            try:
+                os.replace(tmp, str(p))
+                break
+            except PermissionError:  # Windows: another process is replacing the same file at this instant
+                if attempt == 4:
+                    raise
+                time.sleep(0.02 * (attempt + 1))
     except BaseException:
         try:
             os.unlink(tmp)
@@ -64,8 +117,7 @@ def _code(key, nonce, h):
     return base64.b32encode(mac).decode()[:6]
 
 
-def issue(h, what, now=None):
-    """Remember that call `h` was stopped. Returns nothing: the code is only ever shown by `pending`."""
+def _issue(h, what, now=None):
     now = time.time() if now is None else now
     d = _load()
     d["pending"] = [e for e in d["pending"] if e["exp"] > now]
@@ -82,8 +134,7 @@ def pending(now=None):
     return [(_code(d["key"], e["nonce"], e["hash"]), e["what"], int(e["exp"] - now)) for e in d["pending"] if e["exp"] > now]
 
 
-def redeem(code, now=None):
-    """True when `code` matches a live stopped call: that call may then run once. Wrong codes count toward a lock."""
+def _redeem(code, now=None):
     now = time.time() if now is None else now
     d = _load()
     if d["locked_until"] > now:
@@ -108,8 +159,7 @@ def locked_for(now=None):
     return max(0, int(_load()["locked_until"] - now))
 
 
-def consume(h, now=None):
-    """True once for a call the owner allowed; the allowance is spent."""
+def _consume(h, now=None):
     now = time.time() if now is None else now
     d = _load()
     live = [a for a in d["allowed"] if a["exp"] > now]
@@ -120,3 +170,21 @@ def consume(h, now=None):
         d["allowed"] = live
         _save(d)
     return hit is not None
+
+
+def issue(h, what, now=None):
+    """Remember that call `h` was stopped. Returns nothing: the code is only ever shown by `pending`."""
+    with _lock():
+        _issue(h, what, now)
+
+
+def redeem(code, now=None):
+    """True when `code` matches a live stopped call: that call may then run once. Wrong codes count toward a lock."""
+    with _lock():
+        return _redeem(code, now)
+
+
+def consume(h, now=None):
+    """True once for a call the owner allowed; the allowance is spent."""
+    with _lock():
+        return _consume(h, now)
