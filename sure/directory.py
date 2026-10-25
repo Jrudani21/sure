@@ -1,7 +1,11 @@
 """Permission directory: card wording and detection rules, read from directory/permissions.json.
 Also the text and folder hygiene every writer of card text, ledger lines and events shares."""
+import hashlib
 import json
+import os
 import re
+import subprocess
+import sys
 import unicodedata
 from pathlib import Path
 
@@ -135,3 +139,118 @@ def sure_dir(cwd):
     if not gi.exists():
         gi.write_text("*\n", encoding="utf-8")
     return d
+
+
+# ---- custom rules: users may add or tighten, never loosen; they load only after `sure.py test` verified them ----
+USER_PATH = Path.home() / ".sure" / "rules.json"
+RANK = {"easy": 0, "hard": 1, "impossible": 2}
+PROBES = ("a" * 4000 + "!", "a " * 2000 + "!", "/" * 4000 + "!", "x=" * 2000 + "!")
+_TIME_PROBE = (
+    "import re,sys,time\nrx=re.compile(sys.argv[1],re.I)\nt=time.perf_counter()\n"
+    "for s in sys.argv[2:]: rx.search(s)\nprint(time.perf_counter()-t)"
+)
+
+
+def user_path(path=None):
+    return Path(path or os.environ.get("SURE_RULES") or USER_PATH)
+
+
+def _marker(p):
+    return p.with_name(p.name + ".ok")
+
+
+def digest(p):
+    return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+
+
+def mark_verified(path=None):
+    p = user_path(path)
+    _marker(p).write_text(digest(p), encoding="utf-8")
+
+
+def _check_user(rule, by_id):
+    if not isinstance(rule, dict) or not isinstance(rule.get("id"), str):
+        raise ValueError("every rule needs an id")
+    base = by_id.get(rule["id"])
+    if base is not None:  # extending a built-in: only matchers (and a higher tier) are read
+        if rule.get("tier") is not None and rule["tier"] not in TIERS:
+            raise ValueError(f"{rule['id']}: bad tier {rule['tier']!r}")
+        validate([{**base, "matchers": rule.get("matchers", [])}])
+    else:
+        validate([rule])
+
+
+def read_user(path=None, need_ok=True):
+    """(rules, tests, error). A missing file is ([], [], None). Any problem returns no rules and a message:
+    the built-in rules stay in force, so a broken custom file never weakens anything."""
+    p = user_path(path)
+    if not p.exists():
+        return [], [], None
+    try:
+        d = json.loads(p.read_text(encoding="utf-8-sig"))
+        if not isinstance(d, dict):
+            raise ValueError("the file must be an object with rules and tests")
+        rules, tests = d.get("rules", []), d.get("tests", [])
+        if not isinstance(rules, list) or not isinstance(tests, list):
+            raise ValueError("rules and tests must be lists")
+        by_id = {e["id"]: e for e in load()}
+        for r in rules:
+            _check_user(r, by_id)
+        for t in tests:
+            if not (isinstance(t, dict) and isinstance(t.get("cmd"), str) and isinstance(t.get("expect"), str)):
+                raise ValueError("every test needs cmd and expect")
+    except (OSError, ValueError) as e:
+        return [], [], f"custom rules {p.name}: {e}"
+    trusted = os.environ.get("SURE_RULES_TRUST") == "1" and "_selftest" in sys.argv  # only `sure.py test`'s own child
+    if need_ok and not trusted:
+        try:
+            ok = _marker(p).read_text(encoding="utf-8").strip() == digest(p)
+        except OSError:
+            ok = False
+        if not ok:
+            return [], tests, f"custom rules {p.name} not verified yet: run `sure.py test`"
+    return rules, tests, None
+
+
+def merge(builtin, user):
+    """Built-ins first and untouched in order. A user rule with a built-in id adds matchers and may raise the tier;
+    a new id is appended and always asks. Nothing here can lower a tier or make a kind quiet."""
+    out = [dict(e, matchers=list(e["matchers"])) for e in builtin]
+    by = {e["id"]: e for e in out}
+    for r in user:
+        e = by.get(r["id"])
+        if e is not None:
+            e["matchers"] += r.get("matchers", [])
+            if RANK.get(r.get("tier"), -1) > RANK[e["tier"]]:
+                e["tier"] = r["tier"]
+        else:
+            n = dict(r, matchers=list(r["matchers"]))
+            n.pop("default", None)
+            out.append(n)
+            by[n["id"]] = n
+    return out
+
+
+def load_all():
+    """(entries, error): built-ins plus verified custom rules."""
+    base = load()
+    rules, _tests, err = read_user()
+    try:
+        return merge(base, rules), err
+    except Exception as e:  # never let a custom file take the hook down
+        return base, f"custom rules: {e}"
+
+
+def slow_pattern(rules):
+    """The first user pattern taking over 50 ms (or hanging) on adversarial text, else None.
+    Each runs in a child process because Python cannot interrupt a regex."""
+    for r in rules:
+        for m in r.get("matchers", []):
+            try:
+                out = subprocess.run([sys.executable, "-c", _TIME_PROBE, m["pattern"], *PROBES],
+                                     capture_output=True, text=True, timeout=3)
+                if float(out.stdout.strip() or 9) > 0.05:
+                    return m["pattern"]
+            except subprocess.TimeoutExpired:
+                return m["pattern"]
+    return None

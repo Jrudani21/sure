@@ -35,7 +35,7 @@ def test_validate_rejects_bad_tier():
 
 def test_matcher_order_preserved():
     by_id = {e["id"]: e for e in directory.load()}
-    assert [m["scope"] for m in by_id["delete"]["matchers"]] == ["seg", "seg", "seg"]
+    assert [m["scope"] for m in by_id["delete"]["matchers"]] == ["seg", "seg", "seg", "whole", "seg", "seg"]
     assert len(by_id["pipe_to_shell"]["matchers"]) == 3
     order = [e["id"] for e in directory.load() if e["matchers"]]
     assert order.index("pipe_to_shell") < order.index("database") < order.index("delete") < order.index("push") < order.index("install") < order.index("script_launcher")

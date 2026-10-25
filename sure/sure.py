@@ -14,9 +14,14 @@ except Exception:  # sidecar is optional: never let it take the hook down
     events = None
 
 try:
+    import allow
+except Exception:  # one-time codes are optional too
+    allow = None
+
+try:
     import directory
 
-    _ENTRIES = directory.load()
+    _ENTRIES, _USER_ERR = directory.load_all()
     RULES = [
         (e["id"], m["scope"], re.compile(m["pattern"], re.I))
         for e in _ENTRIES
@@ -40,7 +45,7 @@ except Exception as _e:  # broken or missing directory: stay silent on stdout ra
         sys.stderr.write(f"sure: permission directory unusable ({type(_e).__name__}), hook disabled\n")
     except Exception:  # stderr closed or None (pythonw): still never crash the hook
         pass
-    _ENTRIES, RULES, _PATHS, _TOOLS = [], [], [], []
+    _ENTRIES, RULES, _PATHS, _TOOLS, _USER_ERR = [], [], [], [], None
 
 # kind -> (tier, what, why it matters, cost, undo)
 CARDS = {e["id"]: (e["tier"], e["what"], e["why"], e["cost"], e["undo"]) for e in _ENTRIES}
@@ -89,7 +94,8 @@ _LEAD = re.compile(
 )
 # Self-protection (best-effort, a cooperative agent's slip, not a sandbox): names are matched after any non-name
 # character, so `>sure.json` and `of=sure.json` count. `mv x s*e.json`, variable-built names and quoted fragments evade it.
-_SURE_CTL = re.compile(r"""(?<![\w-])\.sure[\\/]|(?<![\w.-])sure\.json\b|\bsure\.py["']?\s+(?:board|install|uninstall)\b""", re.I)
+_SURE_CTL = re.compile(
+    r"""(?<![\w-])\.sure[\\/]|(?<![\w.-])sure\.json\b|\bsure\.py["']?\s+(?:board|install|uninstall|allow|pending)\b""", re.I)
 # commands that only look (or whose write is a redirect/tee, checked by _WRITES_CTL); git ones are the common
 # harmless uses in a repo that tracks sure.json
 _READ_ONLY = re.compile(
@@ -321,11 +327,52 @@ def _deobf(cmd):
     return c
 
 
+_PY_CONCAT = re.compile(r"""(['"])([^'"\n]*)\1\s*\+\s*(['"])([^'"\n]*)\3""")
+_PY_IMPORT = re.compile(r"""__import__\s*\(\s*(['"])([\w.]+)\1\s*\)""")
+_PY_GETATTR = re.compile(r"""\bgetattr\s*\(\s*([\w.]+)\s*,\s*(['"])(\w+)\2\s*\)""")
+_PY_MOD_AS = re.compile(r"""\bimport\s+([\w.]+)\s+as\s+(\w+)""")
+_PY_FROM_AS = re.compile(r"""\bfrom\s+([\w.]+)\s+import\s+(\w+)\s+as\s+(\w+)""")
+_PY_ATTR_VAR = re.compile(r"""(?:^|[;\n"])[ \t]*(\w+)[ \t]*=[ \t]*([A-Za-z_][\w.]*\.\w+)[ \t]*(?=[;\n]|$)""")
+_PY_STR_VAR = re.compile(r"""(?:^|[;\n"])[ \t]*(\w+)[ \t]*=[ \t]*[fFrRbB]?((['"])[^'"\n]{0,300}\3)[ \t]*(?=[;\n]|$)""")
+_PY_MOD_VAR = re.compile(r"""(?:^|[;\n"])[ \t]*(\w+)[ \t]*=[ \t]*([A-Za-z_]\w*)[ \t]*(?=[;\n]|$)""")
+_PY_HINT = re.compile(r"python|__import__|getattr", re.I)
+
+
+def _pydeobf(cmd):
+    """Python written with indirection, as the interpreter will read it: __import__('os'), getattr(m, 'f'),
+    'a' + 'b', import m as x, name = 'literal'. Run-time tricks (chr(), join, eval of built strings) stay out of reach."""
+    if not _PY_HINT.search(cmd):
+        return cmd
+    c = cmd
+    for _ in range(4):
+        n = _PY_CONCAT.sub(lambda m: m.group(1) + m.group(2) + m.group(4) + m.group(1), c)
+        if n == c:
+            break
+        c = n
+    c = _PY_GETATTR.sub(r"\1.\3", _PY_IMPORT.sub(r"\2", c))
+    for mod, alias in _PY_MOD_AS.findall(c):
+        c = re.sub(r"(?<![\w.])" + re.escape(alias) + r"\.", mod + ".", c)
+    for mod, name, alias in _PY_FROM_AS.findall(c):
+        c = re.sub(r"(?<![\w.])" + re.escape(alias) + r"\s*\(", mod + "." + name + "(", c)
+    for name, target in _PY_MOD_VAR.findall(c):  # s = subprocess (often from __import__)
+        if name != target:
+            c = re.sub(r"(?<![\w.])" + re.escape(name) + r"\.", target + ".", c)
+    for name, target in _PY_ATTR_VAR.findall(c):
+        c = re.sub(r"(?<![\w.])" + re.escape(name) + r"\s*\(", target + "(", c)
+    for name, lit, _q in _PY_STR_VAR.findall(c):
+        c = re.sub(r"(?<![\w.'\"])" + re.escape(name) + r"(?!\w)(?!\s*=[^=])", lambda _m, v=lit: v, c)
+        if len(c) > MAX_CMD * 4:  # substitution can multiply the text; past the cap the original is all that is read
+            return cmd
+    return c
+
+
 def _bash_kind(cmd):
     """The matching kind with the highest tier; ties keep directory order."""
     found = _bash_kinds(cmd)
     if (d := _deobf(cmd)) != cmd:  # GuardFall: rules must see what runs, not the disguise
         found += _bash_kinds(d)
+    if (py := _pydeobf(d)) != d:  # python indirection: aliases, __import__, getattr, split strings
+        found += _bash_kinds(py)
     return min(found, key=lambda k: (-_RANK[CARDS[k][0]], _ORDER[k])) if found else None
 
 
@@ -685,6 +732,20 @@ def main(argv, stdin_text, cwd):
             log(cwd, f"{how} {tag}")
             rec(how, "rule")
             return ""
+        # a host that turns every ask into a block ("ken" is an older alias of "no-ask")
+        ken = allow is not None and os.environ.get("SURE_CLIENT") in ("no-ask", "ken")
+        if ken:
+            h = allow.cmd_hash(data["tool_name"], data["tool_input"])
+            try:
+                if allow.consume(h):  # the owner ran `sure.py allow <code>` for exactly this call
+                    log(cwd, f"allowed once by the owner {tag} {risk['what']}")
+                    rec("decided", via="allow-code", what=risk["what"])
+                    return json.dumps({"hookSpecificOutput": {
+                        "hookEventName": "PreToolUse", "permissionDecision": "allow",
+                        "permissionDecisionReason": "Allowed once by the owner."}})
+                allow.issue(h, risk["what"])  # the code is shown only by `sure.py pending`, never in this output
+            except Exception:
+                pass  # fail open to today's behaviour: the plain ask
         log(cwd, f"asked {tag} {risk['what']}")
         rec("asked", what=risk["what"])
         sp = man.get("save_points")
@@ -731,6 +792,47 @@ def check(args):
     if not risk:
         return "Sure? would stay quiet: no card for this."
     return f"{render_card(risk)}\nKIND: {risk['kind']} ({risk['tier']})"
+
+
+def _selftest():
+    """Run the tests of the custom rules file through the classifier. Prints PASS n / FAIL m; 1 on any mismatch."""
+    _rules, tests, err = directory.read_user(need_ok=False)
+    if err:
+        print(err)
+        return 1
+    ok, bad = 0, []
+    for t in tests:
+        risk = classify("Bash", {"command": t["cmd"]})
+        got = risk["kind"] if risk else "none"
+        if got == t["expect"]:
+            ok += 1
+        else:
+            bad.append(f"FAIL {t['cmd']!r}: expected {t['expect']}, got {got}")
+    print("\n".join(bad + [f"PASS {ok} / FAIL {len(bad)}"]))
+    return 1 if bad else 0
+
+
+def rule_test(path=None):
+    """`sure.py test [file]`: check a custom rules file, time its patterns, run its tests. Only a clean run marks the
+    file verified, which is what lets the hook load it."""
+    p = directory.user_path(path)
+    rules, _tests, err = directory.read_user(p, need_ok=False)
+    if err:
+        print(err)
+        return 1
+    if not p.exists():
+        print(f"No custom rules file at {p}.")
+        return 0
+    slow = directory.slow_pattern(rules)
+    if slow:
+        print(f"custom rules {p.name}: a pattern is too slow (over 50 ms on adversarial text), so it is rejected: {slow}")
+        return 1
+    r = subprocess.run([sys.executable, __file__, "_selftest"], capture_output=True, text=True,
+                       env={**os.environ, "SURE_RULES": str(p), "SURE_RULES_TRUST": "1"})
+    print(r.stdout, end="")
+    if r.returncode == 0:
+        directory.mark_verified(p)
+    return r.returncode
 
 
 def _cli_fail(what, e):
@@ -780,6 +882,26 @@ if __name__ == "__main__":
         if sys.argv[1:2] == ["scan"]:
             import scan
             print(scan.main(sys.argv[2:]))
+            sys.exit(0)
+        if sys.argv[1:2] == ["test"]:
+            sys.exit(rule_test(sys.argv[2] if len(sys.argv) > 2 else None))
+        if sys.argv[1:2] == ["_selftest"]:  # child of `test`: custom rules are trusted here, the parent just verified them
+            sys.exit(_selftest())
+        if sys.argv[1:2] == ["pending"]:
+            import allow as _a
+
+            rows = _a.pending()
+            print("\n".join(f"{c}  {w}  ({s // 60} min left)" for c, w, s in rows) if rows else "Nothing is waiting.")
+            sys.exit(0)
+        if sys.argv[1:2] == ["allow"]:
+            import allow as _a
+
+            if _a.locked_for():
+                print(f"Locked for {_a.locked_for() // 60 + 1} more minutes after 5 wrong codes.")
+            elif len(sys.argv) > 2 and _a.redeem(sys.argv[2]):
+                print("Allowed once: tell the agent to try that exact call again within 10 minutes.")
+            else:
+                print("That code is wrong or has expired (see `sure.py pending`).")
             sys.exit(0)
         if sys.argv[1:2] == ["stats"]:
             print(stats(str(Path.cwd())))

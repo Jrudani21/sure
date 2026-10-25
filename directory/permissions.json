@@ -160,6 +160,21 @@
         "tool": "Bash",
         "scope": "seg",
         "pattern": "^git(\\s+(-[Cc]\\s*(\"[^\"]*\"|'[^']*'|\\S+)|--[\\w-]+(=\\S+)?|-[pP])){0,6}\\s+(clean|reset\\s+--hard|restore|stash\\s+drop|checkout\\s+--|branch\\s+(?-i:-D))(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "whole",
+        "pattern": "(?is)(?:^|[;&|(\n])\\s*(?:\\S*[/\\\\])?(?:python3?|node|deno|bun|perl|ruby)(?:\\.exe)?(?=\\s).{0,500}?(?:\\bos\\.(?:remove|unlink|rmdir|removedirs)\\s*\\(|\\bshutil\\.rmtree\\s*\\(|\\.(?:unlink|rmdir)\\s*\\(|\\.(?:rm|rmdir|unlink)Sync\\s*\\(|\\bfs(?:\\.promises)?\\.(?:rm|rmdir|unlink)\\s*\\(|\\b(?:os\\.system|os\\.popen|subprocess\\.\\w+|child_process\\.\\w+)\\s*\\([^)]{0,120}?(?<![A-Za-z0-9_.-])(?:rm|rmdir|rd|del|unlink)(?![A-Za-z0-9_.-]))"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "^\\s*(?:[A-Za-z_][A-Za-z_0-9]*\\s*=\\s*)?(?:os\\.(?:remove|unlink|rmdir|removedirs)|shutil\\.rmtree|fs(?:\\.promises)?\\.(?:rm|rmdir|unlink)(?:Sync)?)\\s*\\(|^\\s*(?:[A-Za-z_]\\w*\\s*=\\s*)?(?:pathlib\\.)?(?:Path\\([^()]*\\)|[A-Za-z_][\\w.]*)\\.(?:unlink|rmdir)(?:Sync)?\\s*\\("
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "\\bmap\\s*\\(\\s*(?:os\\.(?:remove|unlink|rmdir|removedirs)|shutil\\.rmtree)\\s*,"
       }
     ]
   },
@@ -181,6 +196,11 @@
         "tool": "Bash",
         "scope": "seg",
         "pattern": "^git(\\s+(-[Cc]\\s*(\"[^\"]*\"|'[^']*'|\\S+)|--[\\w-]+(=\\S+)?|-[pP])){0,6}\\s+push(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "(?:subprocess\\.\\w+|os\\.system|os\\.popen)\\s*\\([^\\n]*\\bgit\\b[^\\n]*\\bpush\\b"
       }
     ]
   },
@@ -600,6 +620,16 @@
         "tool": "Bash",
         "scope": "seg",
         "pattern": "^(?:\\S*[\\\\/])?(?:kubectl|oc)(?:\\.exe|\\.cmd)?\\b.*?\\sget\\b.*?(?:-o|--output)(?:=|\\s*)(?:yaml|json|jsonpath|go-template).*?\\ssecrets?(?=\\s|$)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "(?<![\\w.-])(?:io\\.)?open\\s*\\(\\s*(?:os\\.path\\.expanduser\\s*\\(\\s*)?[rbfRBF]*['\"][^'\"]*(?:\\.env(?!\\w)(?!\\.(?:example|sample|template|dist)\\b)|id_rsa|id_ed25519|\\.ssh[/\\\\]|\\.aws[/\\\\]credentials|\\.git-credentials|(?:~|Users[/\\\\][^/\\\\'\"]*|home[/\\\\][^/\\\\'\"]*)[/\\\\]\\.npmrc|\\.pgpass)[^'\"]*['\"]\\s*(?:\\)|,(?!\\s*['\"]?[wax]))"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "\\bPath\\s*\\(\\s*[rbfRBF]*['\"][^'\"]*(?:\\.env(?!\\w)(?!\\.(?:example|sample|template|dist)\\b)|id_rsa|id_ed25519|\\.ssh[/\\\\]|\\.aws[/\\\\]credentials|\\.git-credentials|(?:~|Users[/\\\\][^/\\\\'\"]*|home[/\\\\][^/\\\\'\"]*)[/\\\\]\\.npmrc|\\.pgpass)[^'\"]*['\"]\\s*\\)\\s*(?:\\.expanduser\\s*\\(\\s*\\)\\s*)?\\.read_(?:text|bytes)\\s*\\("
       }
     ]
   },
@@ -681,6 +711,16 @@
         "tool": "Bash",
         "scope": "seg",
         "pattern": "^(?:\\S*[\\\\/])?az(?:\\.exe|\\.cmd)?(?=\\s).*?--public-access(?:=|\\s+)(?:blob|container)"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "\\b(?:requests|httpx)\\.(?:post|put|patch)\\s*\\([^)\\n]*(?:pastebin\\.com|transfer\\.sh|0x0\\.st|file\\.io|paste\\.rs|sprunge\\.us|catbox\\.moe|ix\\.io|dpaste\\.\\w+|hastebin\\.com|bashupload\\.com|temp\\.sh|anonfiles\\.com|termbin\\.com|webhook\\.site|discord(?:app)?\\.com/api/webhooks|hooks\\.slack\\.com)(?![\\w-])"
+      },
+      {
+        "tool": "Bash",
+        "scope": "seg",
+        "pattern": "\\b(?:urlopen|Request)\\s*\\([^)\\n]*(?:pastebin\\.com|transfer\\.sh|0x0\\.st|file\\.io|paste\\.rs|sprunge\\.us|catbox\\.moe|ix\\.io|dpaste\\.\\w+|hastebin\\.com|bashupload\\.com|temp\\.sh|anonfiles\\.com|termbin\\.com|webhook\\.site|discord(?:app)?\\.com/api/webhooks|hooks\\.slack\\.com)(?![\\w-])[^)\\n]*\\bdata\\s*="
       }
     ]
   },

@@ -180,7 +180,7 @@ Several good open-source tools guard coding agents. They solve overlapping probl
 | **Agents** | Claude Code | Claude Code, Cursor, Codex CLI | 17 coding CLIs | Claude Code, Cursor, Factory AI, OpenCode |
 | **What you see** | Four plain-English lines (what, why it matters, cost, undo) and a tier | Rule id, title and reason | A block message that explains why | A policy feedback message |
 | **Deciding** | Local board: drag a card to Allow once, Block, Ask Claude or Always allow; flow map and replay | The agent's own prompt; rules block, ask or warn | The agent's own prompt; a GUI to pick presets and toggle rules | Allow, modify, block, warn or require review |
-| **Tuning** | `sure.json` options per project | Allow one command shape, change a rule's action, disable a pack, add rules with test fixtures | Standard, Strict and Paranoid presets; custom rulebooks | Write your own policies |
+| **Tuning** | `sure.json` options per project; your own rules file with a test runner | Allow one command shape, change a rule's action, disable a pack, add rules with test fixtures | Standard, Strict and Paranoid presets; custom rulebooks | Write your own policies |
 | **Looking back** | Replay tab and a ledger per project | `scan` replays past transcripts into an HTML report | Audit log, `doctor` and `explain` | Structured logs and traces |
 | **Needs** | Python 3.9+, no packages | Node.js 20+ | Node.js 18+ | A Rust CLI |
 
@@ -188,7 +188,7 @@ Several good open-source tools guard coding agents. They solve overlapping probl
 
 **Choose another when** you need more rules today (Guard), real shell parsing or many different agents (cc-safety-net), policy as code and enterprise controls (Cupcake), a real parser for many shells ([vouch](https://github.com/polston/vouch)), auto-approval of known-safe commands ([Dippy](https://github.com/sebb3/Dippy)), or the most packs and agents ([dcg](https://github.com/Dicklesworthstone/destructive_command_guard)).
 
-**Where Sure? is behind:** the public repo supports Claude Code only, detection is pattern matching and not a shell parser, and it does not yet have custom rules with a test runner. Common shell disguises (`r''m`, `$IFS`, `$(echo rm)`, variables used as the command) are unwrapped before the rules run, but nothing beyond that is simulated. That is on the list, and the gaps above are listed on purpose so you can judge it for what it is.
+**Where Sure? is behind:** the public repo supports Claude Code only, and detection is pattern matching and not a shell parser. Common shell disguises (`r''m`, `$IFS`, `$(echo rm)`, variables used as the command) are unwrapped before the rules run, and so is Python written with indirection (`import x as y`, `__import__`, `getattr`, split strings), but nothing beyond that is simulated. That is on the list, and the gaps above are listed on purpose so you can judge it for what it is.
 
 ## Commands
 
@@ -201,7 +201,32 @@ python sure/sure/sure.py report 7       # last 7 days in plain words, with a nud
 python sure/sure/sure.py undo 1         # restore save point 1 (needs save points; it does not delete new files)
 python sure/sure/sure.py board          # start the local board, prints http://127.0.0.1:<port>/#<page key>
 python sure/sure/sure.py board on|off   # enable or disable the board for the current project
+python sure/sure/sure.py pending        # for hosts that cannot ask (e.g. a wrapper that blocks every ask): one-time codes for stopped calls
+python sure/sure/sure.py allow <code>   # allow that exact call once, within 10 minutes (5 wrong codes lock it for 10 minutes)
 ```
+
+## Your own rules
+
+Put extra rules in `~/.sure/rules.json` (or point `SURE_RULES` at a file). The file is the same shape as `directory/permissions.json`, plus the tests that prove your rules, and [`examples/custom-rules.json`](examples/custom-rules.json) is a working copy:
+
+```json
+{ "rules": [ { "id": "prod_deploy", "...": "name, tier, what, why, cost, undo, matchers" } ],
+  "tests": [ { "cmd": "deploy.sh prod", "expect": "prod_deploy" }, { "cmd": "deploy.sh staging", "expect": "none" } ] }
+```
+
+- **Rules can only add or tighten.** A rule with a built-in id adds matchers and may raise the tier. It cannot lower a tier or make a kind quiet. A new kind always asks.
+- **Run `python sure/sure/sure.py test [file]` after every edit.** It checks the file, times each pattern in a child process (a pattern slower than 50 ms on adversarial probe strings is rejected, because a hung hook would let everything through), runs your tests, and prints `PASS n / FAIL m`. Only a clean run marks the file verified, and Sure? loads it only then.
+- **A broken or unverified file is ignored and the built-in rules stay in force.** Nothing becomes weaker because a rules file is wrong.
+
+## When nobody can click Allow
+
+Claude Code shows its own prompt when Sure? asks. A host that turns every ask into a block (an unattended run, or a wrapper around another agent) leaves you no way to approve one call. For those hosts, set `SURE_CLIENT=no-ask` in the environment of the Sure? process:
+
+- the stopped call gets a 6-character code that is **not** in the text the agent sees;
+- `python sure/sure/sure.py pending` lists the codes in your own terminal, and `python sure/sure/sure.py allow <code>` lets that exact call run once, within 10 minutes;
+- the code is single use, five wrong tries lock it for ten minutes, and `sure.py allow` and `pending` are themselves Sure? controls, so an agent that runs them gets a card.
+
+This is friction against an agent, not a boundary: anything running as you can read `~/.sure/allow.json`.
 
 ## Project options
 
@@ -240,6 +265,8 @@ The hook makes a short HTTP call to 127.0.0.1 only when a project has the board 
 
 - Detection is pattern matching, not a shell parser. Unusual quoting, wrapper forms, `$(...)` inside `echo`, some PowerShell constructs (`Start-Process -Verb RunAs`, `Format-Volume`, ...), and tools such as `rsync --delete`, `truncate`, other forms of docker, kubectl and cloud commands (for example `docker rm -f` or `kubectl scale --replicas=0`), and commands split across lines with `\` can get past it.
 - It cannot see what a script does once launched, and it does not inspect MCP tool input.
+- Python written inline is read for deletes, secret-file reads, `git push` and posts to paste or webhook sites. Ordinary API calls (`requests.post` to a normal host) are not carded: on a month of real agent code every such call was a model API request, and carding them would have been noise. Python indirection is unwrapped (`import x as y`, `__import__`, `getattr`, split strings, simple variables), but anything built at run time (`chr()`, `join`, `eval`, a path returned by a call) is not.
+- A script written to disk with a heredoc (`cat > x.py <<EOF`) is not read, and neither is the later `python x.py`. Reading written scripts was tried and dropped: on 2,240 real heredoc commands it changed 46, and 43 of those were false cards for writing test files that merely mention a dangerous command.
 - Anything running as you, including the agent, can tamper with Sure? (see [SECURITY.md](SECURITY.md)).
 - A visible but unattended board tab makes the hook wait up to 120 seconds.
 

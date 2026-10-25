@@ -1,0 +1,32 @@
+{
+  "rules": [
+    {
+      "id": "prod_deploy",
+      "name": "Deploy to production",
+      "touches": "run_commands",
+      "tier": "hard",
+      "lasts": "once",
+      "decided_by": ["you"],
+      "what": "Deploys to production: {target}",
+      "why": "Customers see the change straight away.",
+      "cost": "A bad deploy is public until someone rolls it back.",
+      "undo": "Roll back to the previous release.",
+      "matchers": [
+        { "tool": "Bash", "scope": "seg", "pattern": "^(?:\\S*[\\\\/])?deploy(?:\\.sh|\\.cmd)?\\s+(?:--)?prod\\b" }
+      ]
+    },
+    {
+      "id": "delete",
+      "tier": "impossible",
+      "matchers": [
+        { "tool": "Bash", "scope": "seg", "pattern": "^wipe-all\\b" }
+      ]
+    }
+  ],
+  "tests": [
+    { "cmd": "deploy.sh prod", "expect": "prod_deploy" },
+    { "cmd": "deploy.sh staging", "expect": "none" },
+    { "cmd": "wipe-all", "expect": "delete" },
+    { "cmd": "ls", "expect": "none" }
+  ]
+}
