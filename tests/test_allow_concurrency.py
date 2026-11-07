@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_allow_concurrency.py a6c31b3813a79689
 """Several Sure? processes can write ~/.sure/allow.json at once (a hook issuing while the owner redeems): no update may be lost."""
 import os
 import subprocess

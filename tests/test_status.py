@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_status.py 901116deb67af1bb
 """sure status: is Sure? installed and healthy, what is this project set to, what happened lately."""
 import json
 import subprocess

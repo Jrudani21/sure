@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_hardening.py 5069aebefd7a84d0
 """Final fix wave A: token split, board identity proof, installer, card text, classifier, caps, hygiene."""
 import hashlib
 import hmac

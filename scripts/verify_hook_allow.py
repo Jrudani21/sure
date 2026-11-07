@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/scripts/verify_hook_allow.py 6be56288092cc892
 """Does a PreToolUse hook 'allow' beat a permissions.deny rule? Prints ran/denied.
 Usage: python verify_hook_allow.py [--no-hook]   (--no-hook = control run)"""
 import json

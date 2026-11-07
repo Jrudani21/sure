@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_corpus_fixes.py 7678cf0de7efa8a1
 import copy
 import sys
 from pathlib import Path

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/sure/board.py 9cae2f7e01abaa78
 """Local decision board: the hook posts a request and long-polls; the page drags a card to decide.
 
 Two secrets. The hook token (in the runtime file) opens only POST /api/request and /api/withdraw.

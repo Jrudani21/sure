@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_allow_once.py fff32c6c356226a6
 """One-time allow codes: a call Sure? stopped while nobody was at the board can be allowed once by the owner."""
 import json
 import os

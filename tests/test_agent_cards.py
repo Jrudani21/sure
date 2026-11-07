@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_agent_cards.py 32a55d624596cd65
 """agent_config_edit (file paths) and agent_autonomy (commands): risky and safe look-alikes."""
 import sys
 from pathlib import Path

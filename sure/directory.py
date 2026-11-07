@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/sure/directory.py f7fc553d2e677058
 """Permission directory: card wording and detection rules, read from directory/permissions.json.
 Also the text and folder hygiene every writer of card text, ledger lines and events shares."""
 import hashlib

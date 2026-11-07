@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_wave_c.py 4b846872a0aca133
 """Final fix wave C: regex backtracking, replay cap, self-protection shapes, MCP/secrets tokens, hygiene."""
 import json
 import sys

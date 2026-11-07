@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_infra_pack.py 9213b07f032a71c9
 """infra_change card: the new patterns stay fast on hostile input and stay quiet on look-alikes."""
 import sys
 import time

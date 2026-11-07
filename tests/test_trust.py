@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_trust.py f9430903a9f200cb
 import json
 import sys
 from pathlib import Path

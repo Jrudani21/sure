@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_c45.py 3a6180706224d95b
 """Tests for C4 (MCP ask_tokens + secrets_and_auth) and C5 (hygiene)."""
 import os
 import sys

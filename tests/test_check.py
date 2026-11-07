@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_check.py 20c23de797cd57a3
 """`sure.py check`: a dry run that prints the card for a command or file, running and writing nothing."""
 import subprocess
 import sys

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_corpus.py f8b4630d4f60075e
 import json
 import sys
 from pathlib import Path

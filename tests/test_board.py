@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_board.py dc5af0e5516ee1ab
 import http.client
 import json
 import subprocess

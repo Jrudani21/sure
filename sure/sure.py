@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/sure/sure.py fa5de6f00628abb0
 """Sure? - Claude Code hook that explains risky agent actions in plain language."""
 import json
 import os

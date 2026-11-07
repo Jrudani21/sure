@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_wave_b.py c59fac1fa54acd13
 """Final fix wave B: MCP noise, one sure.json reader, replay detail, config split, ask_on, minors, re-audit items."""
 import copy
 import json

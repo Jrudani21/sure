@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_release_hygiene.py 8071d2f05a7b0eef
 """Things a public release must not do: leak the author's machine, trust the wrong environment variable."""
 import json
 import os

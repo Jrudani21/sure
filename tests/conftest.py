@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/conftest.py 2ba88e1169e31cfb
 """Every test runs from an empty temp folder, so a hook started without a cwd (subprocesses
 inherit ours) writes its .sure/ ledger there and never into the checkout."""
 from pathlib import Path

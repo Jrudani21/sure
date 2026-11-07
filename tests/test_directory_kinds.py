@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_directory_kinds.py 38b1adb3bb58b16c
 import sys
 from pathlib import Path
 

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/sure/allow.py b7857bc71a1f6268
 """One-time allow codes for calls Sure? stops while nobody is at the board (Ken's adapter turns every "ask" into a block).
 
 The owner reads the code with `sure.py pending` and redeems it with `sure.py allow <code>` in their own terminal.

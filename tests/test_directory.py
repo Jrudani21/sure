@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_directory.py 613506363f77a0b5
 import copy
 import sys
 from pathlib import Path

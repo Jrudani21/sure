@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_scan_status_hardening.py 1970aecff690919f
 """Audit fixes for sure scan / sure status: hostile transcripts, settings and project files must not crash or leak."""
 import json
 import sys

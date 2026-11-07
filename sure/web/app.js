@@ -1,3 +1,6 @@
+// Copyright (c) 2026 Janak Rudani
+// SPDX-License-Identifier: MIT
+// Provenance: Jrudani21/sure/sure/web/app.js a0c0b8906d32e30b
 "use strict";
 // Sure? board page. Every piece of server data goes through textContent / createElement only.
 // The flow map is inline SVG built with createElementNS; class names come only from fixed lists.

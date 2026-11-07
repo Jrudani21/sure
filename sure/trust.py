@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/sure/trust.py 05ac8d4644a7f563
 """Per-project always-allowed kinds, stored as `auto_allow` in <project>/sure.json (easy-tier kinds only)."""
 import json
 import os

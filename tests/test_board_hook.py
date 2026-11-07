@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_board_hook.py e810947a3d6bcea8
 """Task 6: the PreToolUse hook waits on the board and fails open."""
 import json
 import os

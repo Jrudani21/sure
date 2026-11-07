@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_board_api_shapes.py 2f6d462a7a4c80b1
 """The shapes the board page reads: state()["flow"], state()["trusted"], /api/replay."""
 import json
 import sys

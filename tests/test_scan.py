@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_scan.py 012b5e1687d557be
 """sure scan: replay Claude Code transcripts through today's rules. Read-only, masked, tolerant of junk."""
 import hashlib
 import json

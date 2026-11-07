@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_review.py 92943fb64a6cf82f
 """Regression tests from the final review (findings numbered as in the review)."""
 import json
 import subprocess

@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/sure/events.py d464e40c1fac5d1b
 """JSONL sidecar of Sure? decisions (.sure/events.jsonl) plus a reader for the board's replay."""
 import json
 import re

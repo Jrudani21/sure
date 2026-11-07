@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_board_static.py 72b08074dc96bf86
 """The board page: served without the token, CSP-locked, no external URLs, no HTML-injection sinks."""
 import re
 import sys

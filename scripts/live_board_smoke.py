@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/scripts/live_board_smoke.py 00e5b76d52608942
 """Live proof of the board path with real `claude -p` sessions (run by hand, not by pytest).
 
 For allow_once and block: a hook-guarded `rm -rf <victim>` is held on a scratch Board, the

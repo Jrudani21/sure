@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_events.py 510d45b929a6fb70
 import json
 import sys
 from datetime import datetime

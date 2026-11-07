@@ -1,3 +1,6 @@
+# Copyright (c) 2026 Janak Rudani
+# SPDX-License-Identifier: MIT
+# Provenance: Jrudani21/sure/tests/test_custom_rules.py a6d5eda87a26cc15
 """Custom rules file: users may add or tighten rules; they take effect only after `sure.py test` verified them."""
 import json
 import os
