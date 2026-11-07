@@ -120,12 +120,20 @@ def test_directory_clean_leaves_ordinary_commands_alone(text):
     assert directory.clean(text) == text
 
 
+def _timed(fn, *args):
+    t = time.perf_counter()
+    fn(*args)
+    return time.perf_counter() - t
+
+
 def test_directory_clean_new_patterns_are_fast():
     import directory
+    # Guards against catastrophic regex backtracking, which takes seconds. Best of three after a warm-up call,
+    # because a single cold run on a busy machine can exceed a tight limit without any regex problem.
     for text in ("pass" * 1000, "api_key" * 500 + "=", "Basic " * 600, "--password " * 400, "eyJ" + "a." * 2000):
-        t = time.perf_counter()
         directory.clean(text)
-        assert time.perf_counter() - t < 0.05
+        best = min(_timed(directory.clean, text) for _ in range(3))
+        assert best < 0.25
 
 
 def test_html_report_carries_a_content_security_policy(tmp_path):
