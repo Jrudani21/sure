@@ -3,8 +3,6 @@
 # Provenance: Jrudani21/sure/sure/trust.py 05ac8d4644a7f563
 """Per-project always-allowed kinds, stored as `auto_allow` in <project>/sure.json (easy-tier kinds only)."""
 import json
-import os
-import tempfile
 from pathlib import Path
 
 import directory
@@ -19,16 +17,7 @@ def _read(cwd):
 
 
 def _write(cwd, data):
-    fd, tmp = tempfile.mkstemp(dir=str(cwd), prefix=".sure-", suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
-            json.dump(data, f, indent=2, ensure_ascii=False)
-            f.write("\n")
-        os.replace(tmp, str(Path(cwd) / "sure.json"))
-    except BaseException:
-        if os.path.exists(tmp):
-            os.unlink(tmp)
-        raise
+    directory.atomic_write(Path(cwd) / "sure.json", json.dumps(data, indent=2, ensure_ascii=False) + "\n")
 
 
 def trusted(cwd):

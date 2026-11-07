@@ -19,7 +19,6 @@ import re
 import secrets
 import socket
 import sys
-import tempfile
 import threading
 import time
 from collections import Counter, deque
@@ -196,19 +195,8 @@ class Board:
 
     def _write_runtime(self):
         self.runtime.parent.mkdir(parents=True, exist_ok=True)
-        fd, tmp = tempfile.mkstemp(dir=str(self.runtime.parent), prefix=".board-", suffix=".tmp")
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
-                json.dump({"port": self.port, "token": self.hook_token, "pid": os.getpid()}, f)
-            try:
-                os.chmod(tmp, 0o600)  # ponytail: on Windows only the home folder's ACL protects it
-            except OSError:
-                pass
-            os.replace(tmp, str(self.runtime))
-        except BaseException:
-            if os.path.exists(tmp):
-                os.unlink(tmp)
-            raise
+        # ponytail: on Windows only the home folder's ACL protects it
+        directory.atomic_write(self.runtime, json.dumps({"port": self.port, "token": self.hook_token, "pid": os.getpid()}), prefix=".board-", mode=0o600)
 
     def alive(self):
         """A page heartbeat arrived in the last HEARTBEAT_TTL seconds."""

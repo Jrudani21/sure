@@ -15,9 +15,10 @@ import hashlib
 import hmac
 import json
 import os
-import tempfile
 import time
 from pathlib import Path
+
+import directory
 
 try:
     import msvcrt  # Windows
@@ -89,25 +90,7 @@ def _load():
 
 
 def _save(d):
-    p = _file()
-    fd, tmp = tempfile.mkstemp(dir=str(p.parent), prefix=".allow-", suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
-            json.dump(d, f)
-        for attempt in range(5):
-            try:
-                os.replace(tmp, str(p))
-                break
-            except PermissionError:  # Windows: another process is replacing the same file at this instant
-                if attempt == 4:
-                    raise
-                time.sleep(0.02 * (attempt + 1))
-    except BaseException:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
-        raise
+    directory.atomic_write(_file(), json.dumps(d), prefix=".allow-")
 
 
 def cmd_hash(tool_name, tool_input):

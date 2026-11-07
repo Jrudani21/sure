@@ -9,6 +9,8 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
+import time
 import unicodedata
 from pathlib import Path
 
@@ -257,3 +259,33 @@ def slow_pattern(rules):
             except subprocess.TimeoutExpired:
                 return m["pattern"]
     return None
+
+
+def atomic_write(path, text, prefix=".sure-", mode=None):
+    """Write text to path via a temp file in the same folder, then replace it.
+
+    Retries the replace on Windows PermissionError (another process replacing the same file at that instant)."""
+    path = Path(path)
+    fd, tmp = tempfile.mkstemp(dir=str(path.parent), prefix=prefix, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8", newline="\n") as f:
+            f.write(text)
+        if mode is not None:
+            try:
+                os.chmod(tmp, mode)
+            except OSError:
+                pass
+        for attempt in range(5):
+            try:
+                os.replace(tmp, str(path))
+                break
+            except PermissionError:
+                if attempt == 4:
+                    raise
+                time.sleep(0.02 * (attempt + 1))
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
