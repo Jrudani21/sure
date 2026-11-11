@@ -81,3 +81,15 @@ def test_many_writes_are_bounded():
     cmd = "; ".join(f"echo 'ls' > f{i}.sh" for i in range(500)) + "; sh f499.sh"
     assert kind(cmd) is None
     assert time.time() - t < 2
+
+
+def test_quoted_assignment_is_expanded():
+    assert kind('X="rm"; $X -rf build') == PLAIN
+    assert kind("X='rm'; $X -rf build") == PLAIN
+    assert kind('X="rm" ; $X -rf build') == PLAIN
+    assert kind('A="rm"; B="-rf"; $A $B build') == PLAIN
+
+
+def test_quoted_assignment_of_a_safe_command_stays_quiet():
+    assert kind('X="ls"; $X -la') is None
+    assert kind('X="rm build') is None  # unbalanced quote: left alone, no crash

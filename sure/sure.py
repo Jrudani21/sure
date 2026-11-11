@@ -364,13 +364,13 @@ _EMPTY_Q = re.compile(r"''|\"\"")
 _BSLASH = re.compile(r"\\(?=[A-Za-z])")
 _IFS = re.compile(r"\$\{IFS\}|\$IFS\b")
 _SUBST = re.compile(r"\$\(\s*echo\s+([\w./-]+)\s*\)")
-_ASSIGN = re.compile(r"(?:^|[;&|\n])\s*([A-Za-z_]\w*)=([\w./-]+)\s*(?=[;&|\n])")
+_ASSIGN = re.compile(r"""(?:^|[;&|\n])\s*([A-Za-z_]\w*)=(['"]?)([\w./-]+)\2\s*(?=[;&|\n])""")
 
 
 def _deobf(cmd):
     """The command as bash will run it: empty quotes, backslash-letters, $IFS, $(echo x) and NAME=x expanded."""
     c = _SUBST.sub(r"\1", _IFS.sub(" ", _BSLASH.sub("", _EMPTY_Q.sub("", cmd))))
-    for name, val in _ASSIGN.findall(c):
+    for name, _q, val in _ASSIGN.findall(c):
         c = re.sub(r"\$\{?" + re.escape(name) + r"\}?(?!\w)", val, c)
     return c
 
