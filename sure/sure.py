@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: MIT
 # Provenance: Jrudani21/sure/sure/sure.py fa5de6f00628abb0
 """Sure? - Claude Code hook that explains risky agent actions in plain language."""
+import base64
 import json
 import os
 import re
@@ -177,17 +178,61 @@ def _code_mask(cmd):
     return live
 
 
+_B64_LIT = re.compile(r"""(?:printf\s+(?:'%s'|"%s")\s+|echo\s+(?:-n\s+)?)['"]?([A-Za-z0-9+/]{8,4096}={0,2})['"]?\s*\|\s*base64\s+(?:-d|-D|--decode)\b""")
+
+
+def _decoded(payload):
+    """Text that a literal base64 string decodes to inside a payload that is about to run (eval, bash -c).
+    Only clean printable text counts, so garbage and binary stay quiet; at most 4 literals, 4096 chars each."""
+    out = []
+    for m in _B64_LIT.finditer(payload):
+        if len(out) >= 4:
+            break
+        try:
+            text = base64.b64decode(m.group(1), validate=True).decode("utf-8")
+        except ValueError:
+            continue
+        if text.strip() and all(c.isprintable() or c in "\n\t" for c in text):
+            out.append(text)
+    return out
+
+
 def _payloads(seg):
     """Code a segment hands to a shell: the quoted arguments after bash/sh/pwsh -c (the payload, and the
-    trailing ones that "$1" could run), or what follows eval with its quotes removed."""
+    trailing ones that "$1" could run), or what follows eval with its quotes removed. Literal base64 that the
+    payload decodes (echo X | base64 -d) is added as one more payload, so rules see what would run."""
     e = _EVAL.match(seg)
     if e:
-        return [re.sub(r"['\"]", "", seg[e.end():])]
+        return [re.sub(r"['\"]", "", seg[e.end():])] + _decoded(seg[e.end():])
     m = _DASH_C.match(seg)
     if not m:
         return []
     args = [q.group() for _, q in zip(range(MAX_PAYLOADS), _QARG.finditer(seg, m.end()))]
-    return [a[1:-1] if len(a) > 1 and a[-1] == a[0] else a[1:] for a in args]
+    args = [a[1:-1] if len(a) > 1 and a[-1] == a[0] else a[1:] for a in args]
+    return args + [d for a in args for d in _decoded(a)]
+
+
+def _writes_then_runs(segs):
+    """Text that one segment writes to a file (echo/printf ... > file) and a later segment runs as a script
+    (sh file, ./file). Capped at 16 files and 4096 chars each, like the download-then-run check."""
+    files, ran = {}, []
+    for s in segs:
+        o = _OUT.search(s) if _PRINT.match(s) else None
+        if o and o.group(5):
+            qs = [q.group() for q in _QARG.finditer(s)]
+            if qs and len(files) < 16:
+                files[_base(o.group(5))] = qs[-1].strip("'\"")[:4096]
+            continue
+        t = s.split()
+        if files and t:
+            if _base(t[0]).lower().removesuffix(".exe") in _INTERP:
+                names = [_base(x) for x in t[1:7]]
+            elif t[0].replace("\\", "/").startswith(("./", "/", "~")):
+                names = [_base(t[0])]
+            else:
+                names = []
+            ran += [files[n] for n in names if n in files]
+    return ran
 
 
 def _pipes_to_shell(segs, seps):
@@ -431,6 +476,8 @@ def _bash_kinds(cmd, depth=0):
         for s in segs:
             for p in _payloads(s):
                 found += _bash_kinds(p, depth + 1)
+        for p in _writes_then_runs(segs):  # a script this same command writes and then runs
+            found += _bash_kinds(p, depth + 1)
     return found
 
 
